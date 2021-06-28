@@ -1,11 +1,12 @@
 import os
-from datetime import datetime
 import warnings
-import pyarrow
+from datetime import datetime
+
 import pandas as pd
+import pyarrow
 from pyarrow import csv, parquet
 
-warnings.filterwarnings('ignore')
+warnings.filterwarnings("ignore")
 
 
 def get_data_path():
@@ -39,9 +40,7 @@ def write_parquet(local_csv_file, filename):
     parquet.write_table(table, filename)
 
 
-def read_parquet(
-        file, path=get_data_path(), columns=None
-):
+def read_parquet(file, path=get_data_path(), columns=None):
     """
     This function reads a parquet file & returns it as a pd.DataFrame.
     ----------------------------------------------
@@ -70,34 +69,47 @@ def add_weather_data(df):
     """
 
     # Since there is no vectorized way of converting str to datetime, the map function is used
-    df['Trip Start Timestamp'] = df['Trip Start Timestamp'].map(
-        lambda date_time_str: datetime.strptime(date_time_str, '%m/%d/%Y %I:%M:%S %p'))
+    df["Trip Start Timestamp"] = df["Trip Start Timestamp"].map(
+        lambda date_time_str: datetime.strptime(date_time_str, "%m/%d/%Y %I:%M:%S %p")
+    )
     # Temp column used for merging
-    df['Trip Start Timestamp_temp'] = df['Trip Start Timestamp'].map(lambda x: x.replace(minute=0))
+    df["Trip Start Timestamp_temp"] = df["Trip Start Timestamp"].map(
+        lambda x: x.replace(minute=0)
+    )
 
-    weather_features = {'humidity': 'Humidity(%)',
-                        'pressure': 'Pressure(hPa)',
-                        'temperature': 'Temperature(C)',
-                        'wind_direction': 'Wind Direction(Meteoro. Degree)',
-                        'wind_speed': 'Wind Speed(M/S)'}
+    weather_features = {
+        "humidity": "Humidity(%)",
+        "pressure": "Pressure(hPa)",
+        "temperature": "Temperature(C)",
+        "wind_direction": "Wind Direction(Meteoro. Degree)",
+        "wind_speed": "Wind Speed(M/S)",
+    }
 
     for feature in weather_features:
-        feature_df = pd.read_csv(f'data/{feature}.csv', parse_dates=['datetime'])
-        year_mask = feature_df['datetime'].dt.year == 2015
+        feature_df = pd.read_csv(f"data/{feature}.csv", parse_dates=["datetime"])
+        year_mask = feature_df["datetime"].dt.year == 2015
         _ = feature_df.loc[year_mask]
-        chicago_information = _[['datetime', 'Chicago']]
+        chicago_information = _[["datetime", "Chicago"]]
 
-        if feature == 'temperature':
+        if feature == "temperature":
             # Converting temperature from Kelvin to Celsius
-            chicago_information['Chicago'] = chicago_information['Chicago'] - 273.15
+            chicago_information["Chicago"] = chicago_information["Chicago"] - 273.15
 
-        chicago_information.columns = ['Hourly Timestamp', weather_features.get(feature)]
+        chicago_information.columns = [
+            "Hourly Timestamp",
+            weather_features.get(feature),
+        ]
 
-        df = df.merge(chicago_information, how='left', left_on='Trip Start Timestamp_temp', right_on='Hourly Timestamp',
-                      validate="m:1")
-        df.drop(['Hourly Timestamp'], axis=1, inplace=True)
+        df = df.merge(
+            chicago_information,
+            how="left",
+            left_on="Trip Start Timestamp_temp",
+            right_on="Hourly Timestamp",
+            validate="m:1",
+        )
+        df.drop(["Hourly Timestamp"], axis=1, inplace=True)
 
-    df.drop(['Trip Start Timestamp_temp'], axis=1, inplace=True)
+    df.drop(["Trip Start Timestamp_temp"], axis=1, inplace=True)
 
     return df
 

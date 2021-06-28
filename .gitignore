@@ -113,8 +113,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-#Pycharm
+# Pycharm
 .idea/
 
-#Data
+# Data
 data/
+
+# OS
+.DS_Store

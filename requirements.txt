@@ -4,5 +4,6 @@ pytables
 pandas
 numpy
 jupyter
+scipy
 
 ###### Requirements with Version Specifiers ######`

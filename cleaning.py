@@ -20,7 +20,8 @@ column_description = {
     "categorical_features": ["Payment Type", "Company"],
     "temporal_features": ["Trip Start Timestamp", "Trip End Timestamp"],
     "spatial_features": ["Pickup Census Tract", "Dropoff Census Tract",
-                         "Pickup Community Area", "Dropoff Community Area"],
+                         "Pickup Community Area", "Dropoff Community Area"
+                         ],
 }
 
 
@@ -117,6 +118,45 @@ def _remove_outliers(
     return df.reset_index(drop=True)
 
 
+def _merge_additional_columns(df, file="Taxi_Trips.parquet"):
+    """
+    This function merges the given Dataframe with columns so far missing from the whole Dataframe.
+    ----------------------------------------------
+    :param
+        df(pd.DataFrame): DataFrame to be processed.
+        file(String): Name of the input data file. Default is Taxi_Trips.parquet.
+    :returns:
+        pd.DataFrame: Merged DataFrame.
+    """
+    add_df = read_parquet(file, columns=['Trip ID',
+                                         'Taxi ID',
+                                         'Trip Start Timestamp',
+                                         'Trip End Timestamp',
+                                         'Payment Type',
+                                         'Company',
+                                         'Pickup Centroid Latitude',
+                                         'Pickup Centroid Longitude',
+                                         # 'Pickup Centroid Location', # redundant
+                                         'Dropoff Centroid Latitude',
+                                         'Dropoff Centroid Longitude',
+                                         # 'Dropoff Centroid  Location' # redundant
+                                         ])
+    add_df.rename(columns={"Dropoff Centroid  Location": "Dropoff Centroid Location"}, inplace=True)
+    df = df.merge(
+        add_df,
+        how="left",
+        left_on="Trip ID",
+        right_on="Trip ID"
+    )
+    df.drop(columns=['Trip ID'], inplace=True)
+    invalid_entries = df.shape[0]
+    df.replace("", float("NaN"), inplace=True)
+    df.dropna(subset=["Pickup Centroid Latitude", "Dropoff Centroid Latitude"], inplace=True)
+    invalid_entries -= df.shape[0]
+    print(f"{invalid_entries} invalid entries from Pickup/Dropoff Centroid locations have been successfully dropped!")
+    return df.reset_index(drop=True)
+
+
 def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
     """
     This function reads in all the data, cleans it and saves the cleaned dataframe as parquet file in the data
@@ -127,9 +167,18 @@ def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
         verbose(boolean): Set 'True' to get detailed logging information.
     """
     print("Read the data set")
-    df = read_parquet(file, columns=['Trip Seconds', 'Trip Miles', 'Pickup Census Tract', 'Dropoff Census Tract',
-                                     'Pickup Community Area', 'Dropoff Community Area', 'Fare', 'Tips', 'Tolls',
-                                     'Extras', 'Trip Total'
+    df = read_parquet(file, columns=['Trip ID',
+                                     'Trip Seconds',
+                                     'Trip Miles',
+                                     'Pickup Census Tract',
+                                     'Dropoff Census Tract',
+                                     'Pickup Community Area',
+                                     'Dropoff Community Area',
+                                     'Fare',
+                                     'Tips',
+                                     'Tolls',
+                                     'Extras',
+                                     'Trip Total'
                                      ])
     print("Start cleaning the data set")
     # Remove all entries without a Census Tract and a Community Area
@@ -143,14 +192,13 @@ def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
         df,
         verbose=verbose
     )
-    df.reset_index(drop=True)
+    # Merge further columns
+    print("Merge")
+    df = _merge_additional_columns(df, file=file)
     print("Finished cleaning the data set")
     print("Saving the data set")
     write_parquet_from_pandas(
         df, filename="Taxi_Trips_cleaned.parquet"
     )
 
-# TODO: Remove double spacing in column name
-# TODO: Remove empty strings
-# TODO: Merge further columns with cleaned data set
 # TODO: Add cyclical features

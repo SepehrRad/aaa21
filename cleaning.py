@@ -1,6 +1,7 @@
 import warnings
 
 import numpy as np
+import pandas as pd
 from scipy.stats import zscore
 
 from utils import write_parquet_from_pandas
@@ -9,19 +10,11 @@ from utils import read_parquet
 warnings.filterwarnings("ignore")
 
 column_description = {
-    "cyclical_features": [
-        "start_month",
-        "start_day",
-        "start_hour",
-        "end_hour",
-        "end_day",
-        "end_month",
-    ],
     "categorical_features": ["Payment Type", "Company"],
     "temporal_features": ["Trip Start Timestamp", "Trip End Timestamp"],
     "spatial_features": ["Pickup Census Tract", "Dropoff Census Tract",
                          "Pickup Community Area", "Dropoff Community Area"
-                         ],
+                         ]
 }
 
 
@@ -148,6 +141,8 @@ def _merge_additional_columns(df, file="Taxi_Trips.parquet"):
         left_on="Trip ID",
         right_on="Trip ID"
     )
+    categorical_cols = column_description.get("categorical_features")
+    df[categorical_cols] = df[categorical_cols].astype("category")
     df.drop(columns=['Trip ID'], inplace=True)
     invalid_entries = df.shape[0]
     df.replace("", float("NaN"), inplace=True)
@@ -155,6 +150,26 @@ def _merge_additional_columns(df, file="Taxi_Trips.parquet"):
     invalid_entries -= df.shape[0]
     print(f"{invalid_entries} invalid entries from Pickup/Dropoff Centroid locations have been successfully dropped!")
     return df.reset_index(drop=True)
+
+
+def _add_cyclical_features(df):
+    """
+    This function turns the Trip Start/End Timestamp columns into 5 columns each, divided by Month, Day, Hour, Weekday
+    and Is Weekend. Afterwards the Timestamp columns are removed and the processed DataFrame is returned.
+    ----------------------------------------------
+    :param
+        df(pd.DataFrame): DataFrame to be processed.
+    """
+
+    for col in column_description.get("temporal_features"):
+        df[col] = pd.to_datetime(df[col], format='%m/%d/%Y %I:%M:%S %p')
+        name = col[:-10]
+        df[f"{name} Month"] = df[col].dt.month
+        df[f"{name} Day"] = df[col].dt.day
+        df[f"{name} Hour"] = df[col].dt.hour
+        df[f"{name} Weekday"] = df[col].dt.dayofweek
+        df[f"{name} Is Weekend"] = (df[f"{name} Weekday"] > 4).astype(int)
+        df.drop(columns=[col], inplace=True)
 
 
 def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
@@ -193,12 +208,15 @@ def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
         verbose=verbose
     )
     # Merge further columns
-    print("Merge")
     df = _merge_additional_columns(df, file=file)
     print("Finished cleaning the data set")
+    print("Add cyclical features")
+    # Add cyclical features
+    _add_cyclical_features(df)
+    # Sort table by start date
+    df.sort_values(by=['Trip Start Month', 'Trip Start Day', 'Trip Start Hour'])
+    # Save data
     print("Saving the data set")
     write_parquet_from_pandas(
         df, filename="Taxi_Trips_cleaned.parquet"
     )
-
-# TODO: Add cyclical features

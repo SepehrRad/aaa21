@@ -214,7 +214,7 @@ def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
     # Add cyclical features
     _add_cyclical_features(df)
     # Sort table by start date
-    df.sort_values(by=['Trip Start Month', 'Trip Start Day', 'Trip Start Hour'])
+    df.sort_values(by=['Trip Start Month', 'Trip Start Day', 'Trip Start Hour'], inplace=True)
     # Save data
     print("Saving the data set")
     write_parquet_from_pandas(

@@ -76,7 +76,7 @@ def _remove_invalid_numeric_data(df, verbose=False):
 def _remove_outliers(
         df,
         excluded_cols=None,
-        zscore_threshold=1.5,
+        zscore_threshold=2,
         verbose=False,
 ):
     """
@@ -125,6 +125,10 @@ def _merge_additional_columns(df, file="Taxi_Trips.parquet"):
                                          'Taxi ID',
                                          'Trip Start Timestamp',
                                          'Trip End Timestamp',
+                                         'Fare',
+                                         'Tips',
+                                         'Tolls',
+                                         'Extras',
                                          'Payment Type',
                                          'Company',
                                          'Pickup Centroid Latitude',
@@ -143,7 +147,7 @@ def _merge_additional_columns(df, file="Taxi_Trips.parquet"):
     )
     categorical_cols = column_description.get("categorical_features")
     df[categorical_cols] = df[categorical_cols].astype("category")
-    df.drop(columns=['Trip ID'], inplace=True)
+    # df.drop(columns=['Trip ID'], inplace=True)
     invalid_entries = df.shape[0]
     df.replace("", float("NaN"), inplace=True)
     df.dropna(subset=["Pickup Centroid Latitude", "Dropoff Centroid Latitude"], inplace=True)
@@ -160,7 +164,6 @@ def _add_cyclical_features(df):
     :param
         df(pd.DataFrame): DataFrame to be processed.
     """
-
     for col in column_description.get("temporal_features"):
         df[col] = pd.to_datetime(df[col], format='%m/%d/%Y %I:%M:%S %p')
         name = col[:-10]
@@ -170,6 +173,18 @@ def _add_cyclical_features(df):
         df[f"{name} Weekday"] = df[col].dt.dayofweek
         df[f"{name} Is Weekend"] = (df[f"{name} Weekday"] > 4).astype(int)
         df.drop(columns=[col], inplace=True)
+
+
+def _convert_units(df):
+    """
+    This function converts the Trip Miles in Kilometers and the Trip Seconds in Trip Minutes.
+    ----------------------------------------------
+    :param
+        df(pd.DataFrame): DataFrame to be processed.
+    """
+    df['Trip Kilometers'] = round(df['Trip Miles'] * 1.60934, 2)
+    df['Trip Minutes'] = round(df['Trip Seconds'] / 60, 4)
+    df.drop(columns=['Trip Miles', 'Trip Seconds'], inplace=True)
 
 
 def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
@@ -189,10 +204,6 @@ def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
                                      'Dropoff Census Tract',
                                      'Pickup Community Area',
                                      'Dropoff Community Area',
-                                     'Fare',
-                                     'Tips',
-                                     'Tolls',
-                                     'Extras',
                                      'Trip Total'
                                      ])
     print("Start cleaning the data set")
@@ -213,6 +224,8 @@ def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
     print("Add cyclical features")
     # Add cyclical features
     _add_cyclical_features(df)
+    # Convert Miles to Kilometers and Trip Seconds to Trip Minutes
+    _convert_units(df)
     # Sort table by start date
     df.sort_values(by=['Trip Start Month', 'Trip Start Day', 'Trip Start Hour'], inplace=True)
     # Save data

@@ -4,17 +4,19 @@ import numpy as np
 import pandas as pd
 from scipy.stats import zscore
 
-from utils import write_parquet_from_pandas
-from utils import read_parquet
+from utils import read_parquet, write_parquet_from_pandas
 
 warnings.filterwarnings("ignore")
 
 column_description = {
     "categorical_features": ["Payment Type", "Company"],
     "temporal_features": ["Trip Start Timestamp", "Trip End Timestamp"],
-    "spatial_features": ["Pickup Census Tract", "Dropoff Census Tract",
-                         "Pickup Community Area", "Dropoff Community Area"
-                         ]
+    "spatial_features": [
+        "Pickup Census Tract",
+        "Dropoff Census Tract",
+        "Pickup Community Area",
+        "Dropoff Community Area",
+    ],
 }
 
 
@@ -29,9 +31,15 @@ def _remove_invalid_spatial_entries(df):
         pd.DataFrame: Processed DataFrame.
     """
     num_entries = df.shape[0]
-    df = df[~(df['Pickup Census Tract'].isna() & df['Pickup Community Area'].isna() |
-              df['Dropoff Census Tract'].isna() & df['Dropoff Community Area'].isna())]
-    print(f"{num_entries - df.shape[0]} invalid spatial entries have been successfully removed!")
+    df = df[
+        ~(
+            df["Pickup Census Tract"].isna() & df["Pickup Community Area"].isna()
+            | df["Dropoff Census Tract"].isna() & df["Dropoff Community Area"].isna()
+        )
+    ]
+    print(
+        f"{num_entries - df.shape[0]} invalid spatial entries have been successfully removed!"
+    )
     return df
 
 
@@ -74,10 +82,10 @@ def _remove_invalid_numeric_data(df, verbose=False):
 
 
 def _remove_outliers(
-        df,
-        excluded_cols=None,
-        zscore_threshold=2,
-        verbose=False,
+    df,
+    excluded_cols=None,
+    zscore_threshold=2,
+    verbose=False,
 ):
     """
     This functions removes outliers by applying the 'zscore'-algorithm on all numeric columns.
@@ -121,38 +129,44 @@ def _merge_additional_columns(df, file="Taxi_Trips.parquet"):
     :returns:
         pd.DataFrame: Merged DataFrame.
     """
-    add_df = read_parquet(file, columns=['Trip ID',
-                                         'Taxi ID',
-                                         'Trip Start Timestamp',
-                                         'Trip End Timestamp',
-                                         'Fare',
-                                         'Tips',
-                                         'Tolls',
-                                         'Extras',
-                                         'Payment Type',
-                                         'Company',
-                                         'Pickup Centroid Latitude',
-                                         'Pickup Centroid Longitude',
-                                         # 'Pickup Centroid Location', # redundant
-                                         'Dropoff Centroid Latitude',
-                                         'Dropoff Centroid Longitude',
-                                         # 'Dropoff Centroid  Location' # redundant
-                                         ])
-    add_df.rename(columns={"Dropoff Centroid  Location": "Dropoff Centroid Location"}, inplace=True)
-    df = df.merge(
-        add_df,
-        how="left",
-        left_on="Trip ID",
-        right_on="Trip ID"
+    add_df = read_parquet(
+        file,
+        columns=[
+            "Trip ID",
+            "Taxi ID",
+            "Trip Start Timestamp",
+            "Trip End Timestamp",
+            "Fare",
+            "Tips",
+            "Tolls",
+            "Extras",
+            "Payment Type",
+            "Company",
+            "Pickup Centroid Latitude",
+            "Pickup Centroid Longitude",
+            # 'Pickup Centroid Location', # redundant
+            "Dropoff Centroid Latitude",
+            "Dropoff Centroid Longitude",
+            # 'Dropoff Centroid  Location' # redundant
+        ],
     )
+    add_df.rename(
+        columns={"Dropoff Centroid  Location": "Dropoff Centroid Location"},
+        inplace=True,
+    )
+    df = df.merge(add_df, how="left", left_on="Trip ID", right_on="Trip ID")
     categorical_cols = column_description.get("categorical_features")
     df[categorical_cols] = df[categorical_cols].astype("category")
     # df.drop(columns=['Trip ID'], inplace=True)
     invalid_entries = df.shape[0]
     df.replace("", float("NaN"), inplace=True)
-    df.dropna(subset=["Pickup Centroid Latitude", "Dropoff Centroid Latitude"], inplace=True)
+    df.dropna(
+        subset=["Pickup Centroid Latitude", "Dropoff Centroid Latitude"], inplace=True
+    )
     invalid_entries -= df.shape[0]
-    print(f"{invalid_entries} invalid entries from Pickup/Dropoff Centroid locations have been successfully dropped!")
+    print(
+        f"{invalid_entries} invalid entries from Pickup/Dropoff Centroid locations have been successfully dropped!"
+    )
     return df.reset_index(drop=True)
 
 
@@ -165,7 +179,7 @@ def _add_cyclical_features(df):
         df(pd.DataFrame): DataFrame to be processed.
     """
     for col in column_description.get("temporal_features"):
-        df[col] = pd.to_datetime(df[col], format='%m/%d/%Y %I:%M:%S %p')
+        df[col] = pd.to_datetime(df[col], format="%m/%d/%Y %I:%M:%S %p")
         name = col[:-10]
         df[f"{name} Month"] = df[col].dt.month
         df[f"{name} Day"] = df[col].dt.day
@@ -182,9 +196,9 @@ def _convert_units(df):
     :param
         df(pd.DataFrame): DataFrame to be processed.
     """
-    df['Trip Kilometers'] = round(df['Trip Miles'] * 1.60934, 2)
-    df['Trip Minutes'] = round(df['Trip Seconds'] / 60, 4)
-    df.drop(columns=['Trip Miles', 'Trip Seconds'], inplace=True)
+    df["Trip Kilometers"] = round(df["Trip Miles"] * 1.60934, 2)
+    df["Trip Minutes"] = round(df["Trip Seconds"] / 60, 4)
+    df.drop(columns=["Trip Miles", "Trip Seconds"], inplace=True)
 
 
 def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
@@ -197,15 +211,19 @@ def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
         verbose(boolean): Set 'True' to get detailed logging information.
     """
     print("Read the data set")
-    df = read_parquet(file, columns=['Trip ID',
-                                     'Trip Seconds',
-                                     'Trip Miles',
-                                     'Pickup Census Tract',
-                                     'Dropoff Census Tract',
-                                     'Pickup Community Area',
-                                     'Dropoff Community Area',
-                                     'Trip Total'
-                                     ])
+    df = read_parquet(
+        file,
+        columns=[
+            "Trip ID",
+            "Trip Seconds",
+            "Trip Miles",
+            "Pickup Census Tract",
+            "Dropoff Census Tract",
+            "Pickup Community Area",
+            "Dropoff Community Area",
+            "Trip Total",
+        ],
+    )
     print("Start cleaning the data set")
     # Remove all entries without a Census Tract and a Community Area
     df = _remove_invalid_spatial_entries(df)
@@ -214,10 +232,7 @@ def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
     # Remove invalid numeric entries
     df = _remove_invalid_numeric_data(df, verbose=verbose)
     # Outlier detection
-    df = _remove_outliers(
-        df,
-        verbose=verbose
-    )
+    df = _remove_outliers(df, verbose=verbose)
     # Merge further columns
     df = _merge_additional_columns(df, file=file)
     print("Finished cleaning the data set")
@@ -227,9 +242,9 @@ def clean_dataset(file="Taxi_Trips.parquet", verbose=False):
     # Convert Miles to Kilometers and Trip Seconds to Trip Minutes
     _convert_units(df)
     # Sort table by start date
-    df.sort_values(by=['Trip Start Month', 'Trip Start Day', 'Trip Start Hour'], inplace=True)
+    df.sort_values(
+        by=["Trip Start Month", "Trip Start Day", "Trip Start Hour"], inplace=True
+    )
     # Save data
     print("Saving the data set")
-    write_parquet_from_pandas(
-        df, filename="Taxi_Trips_cleaned.parquet"
-    )
+    write_parquet_from_pandas(df, filename="Taxi_Trips_cleaned.parquet")

@@ -2,6 +2,7 @@ import os
 import warnings
 from datetime import datetime
 
+import geopandas as gpd
 import pandas as pd
 import pyarrow
 from pyarrow import csv, parquet
@@ -130,3 +131,10 @@ def write_parquet_from_pandas(df, filename, path=get_data_path()):
     # The number of threads is explicitly set to one to avoid string conversion problems
     table = pyarrow.Table.from_pandas(df, nthreads=1)
     pyarrow.parquet.write_table(table, parquet_path)
+
+
+def read_geo_dataset(filename, path=get_data_path()):
+    json_path = os.path.join(path, filename)
+    df = gpd.read_file(json_path)
+    return df
+

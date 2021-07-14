@@ -141,4 +141,4 @@ def read_geo_dataset(filename, path=get_data_path()):
 
 def write_geo_dataset(gdf, filename, driver="GeoJSON"):
     json_path = os.path.join(get_data_path(), filename)
-    gdf.to_file("countries.geojson", driver=driver)
+    gdf.to_file(json_path, driver=driver)

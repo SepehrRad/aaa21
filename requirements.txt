@@ -1,5 +1,9 @@
 ###### Requirements without Version Specifiers ######`
 pyarrow
 pytables
+pandas
+numpy
+jupyter
+scipy
 
 ###### Requirements with Version Specifiers ######`

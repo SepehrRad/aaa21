@@ -11,8 +11,8 @@ def get_hexagon(lat, lng, resolution=9):
     return hexagon
 
 
-def get_hexagon_vect(lat, lng, res=9):
-    column = vect.geo_to_h3(lat, lng, res)
+def get_hexagon_vect(lat, lng, resolution=9):
+    column = vect.geo_to_h3(lat, lng, resolution)
     return column
 
 

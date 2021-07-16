@@ -30,12 +30,7 @@ def _remove_invalid_spatial_entries(df):
         pd.DataFrame: Processed DataFrame.
     """
     num_entries = df.shape[0]
-    df = df[
-        ~(
-            df["Pickup Community Area"].isna()
-            | df["Dropoff Community Area"].isna()
-        )
-    ]
+    df = df[~(df["Pickup Community Area"].isna() | df["Dropoff Community Area"].isna())]
     print(
         f"{num_entries - df.shape[0]} invalid spatial entries have been successfully removed!"
     )
@@ -53,7 +48,7 @@ def _set_column_types(df):
     """
     spatial_cols = column_description.get("spatial_features")
     df[spatial_cols] = df[spatial_cols].astype("str")
-    df[spatial_cols] = df[spatial_cols].replace('nan', np.nan)
+    df[spatial_cols] = df[spatial_cols].replace("nan", np.nan)
 
 
 def _remove_invalid_numeric_data(df, verbose=False):

@@ -51,7 +51,7 @@ def _set_column_types(df):
     :returns
         pd.DataFrame: Processed DataFrame.
     """
-    spatial_cols = column_description.get("spatial_features")
+    spatial_cols = column_description.get("spatial_features").copy()
     df[spatial_cols] = df[spatial_cols].astype("str")
     df[spatial_cols] = df[spatial_cols].replace('nan', np.nan)
 

@@ -22,8 +22,7 @@ column_description = {
 
 def _remove_invalid_spatial_entries(df):
     """
-    Removes invalid spatial entries by checking if the Pickup/Dropoff Census Tract as well as the Community Area columns
-    are both null at the same time.
+    Removes invalid spatial entries by checking if the Pickup/Dropoff Community Area columns are null.
     ----------------------------------------------
     :param
         df(pd.DataFrame): DataFrame to be processed.
@@ -33,8 +32,8 @@ def _remove_invalid_spatial_entries(df):
     num_entries = df.shape[0]
     df = df[
         ~(
-            df["Pickup Census Tract"].isna() & df["Pickup Community Area"].isna()
-            | df["Dropoff Census Tract"].isna() & df["Dropoff Community Area"].isna()
+            df["Pickup Community Area"].isna()
+            | df["Dropoff Community Area"].isna()
         )
     ]
     print(
@@ -54,6 +53,7 @@ def _set_column_types(df):
     """
     spatial_cols = column_description.get("spatial_features")
     df[spatial_cols] = df[spatial_cols].astype("str")
+    df[spatial_cols] = df[spatial_cols].replace('nan', np.nan)
 
 
 def _remove_invalid_numeric_data(df, verbose=False):
@@ -159,7 +159,7 @@ def _merge_additional_columns(df, file="Taxi_Trips.parquet"):
     df[categorical_cols] = df[categorical_cols].astype("category")
     # df.drop(columns=['Trip ID'], inplace=True)
     invalid_entries = df.shape[0]
-    df.replace("", float("NaN"), inplace=True)
+    df.replace("", np.nan, inplace=True)
     df.dropna(
         subset=["Pickup Centroid Latitude", "Dropoff Centroid Latitude"], inplace=True
     )

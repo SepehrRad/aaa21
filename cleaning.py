@@ -173,7 +173,7 @@ def _merge_additional_columns(df, file="Taxi_Trips.parquet"):
 def _add_cyclical_features(df):
     """
     This function turns the Trip Start/End Timestamp columns into 5 columns each, divided by Month, Day, Hour, Weekday
-    and Is Weekend. Afterwards the Timestamp columns are removed and the processed DataFrame is returned.
+    and Is Weekend.
     ----------------------------------------------
     :param
         df(pd.DataFrame): DataFrame to be processed.

@@ -31,7 +31,7 @@ def add_time_interval(df):
         df["Trip Start Hour"].between(17, 23, inclusive="left"), "Pickup Time_Interval"
     ] = "evening"
     df.loc[
-        ((df["Trip Start Hour"] >= 23) | (df["Trip End Hour"] < 5)),
+        ((df["Trip Start Hour"] >= 23) | (df["Trip Start Hour"] < 5)),
         "Pickup Time_Interval",
     ] = "night"
 

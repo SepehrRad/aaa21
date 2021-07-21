@@ -186,7 +186,6 @@ def _add_cyclical_features(df):
         df[f"{name} Hour"] = df[col].dt.hour
         df[f"{name} Weekday"] = df[col].dt.dayofweek
         df[f"{name} Is Weekend"] = (df[f"{name} Weekday"] > 4).astype(int)
-        df.drop(columns=[col], inplace=True)
 
 
 def _convert_units(df):

@@ -7,19 +7,19 @@ from shapely.geometry import Polygon
 import utils
 
 
-def get_hexagon(lat, lng, resolution=9):
-    hexagon = h3.geo_to_h3(lat, lng, resolution)
+def get_hexagon(lat, lng, res=6):
+    hexagon = h3.geo_to_h3(lat, lng, res)
     return hexagon
 
 
-def get_hexagon_vect(lat, lng, resolution=9):
-    column = vect.geo_to_h3(lat, lng, resolution)
+def get_hexagon_vect(lat, lng, res=6):
+    column = vect.geo_to_h3(lat, lng, res)
     return column
 
 
-def census_tract_to_hexagon(
+def polygons_to_hexagon(
         gdf=None,
-        res=9,
+        res=6,
         filename="Boundaries - Community Areas (current).geojson",
         path=utils.get_data_path(),
         save=False,
@@ -39,7 +39,7 @@ def census_tract_to_hexagon(
             hexagon_boundaries.append(Polygon(h3.h3_to_geo_boundary(hexagon, True)))
 
     # check if all centroids are in a hexagon
-    hex_centroids = get_hexagon_vect(gdf.geometry.centroid.y, gdf.geometry.centroid.x, resolution=res)
+    hex_centroids = get_hexagon_vect(gdf.geometry.centroid.y, gdf.geometry.centroid.x, res=res)
     for hex_centroid in hex_centroids:
         if hex_centroid not in hexagon_index:
             hexagon_index.append(hex_centroid)

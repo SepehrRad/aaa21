@@ -20,7 +20,7 @@ def get_hexagon_vect(lat, lng, resolution=9):
 def census_tract_to_hexagon(
         gdf=None,
         res=9,
-        filename="Boundaries - City.geojson",
+        filename="Boundaries - Community Areas (current).geojson",
         path=utils.get_data_path(),
         save=False,
         save_name=None,
@@ -38,10 +38,19 @@ def census_tract_to_hexagon(
             hexagon_index.append(hexagon)
             hexagon_boundaries.append(Polygon(h3.h3_to_geo_boundary(hexagon, True)))
 
+    # check if all centroids are in a hexagon
+    hex_centroids = get_hexagon_vect(gdf.geometry.centroid.y, gdf.geometry.centroid.x, resolution=res)
+    for hex_centroid in hex_centroids:
+        if hex_centroid not in hexagon_index:
+            hexagon_index.append(hex_centroid)
+            hexagon_boundaries.append(Polygon(h3.h3_to_geo_boundary(hex_centroid, True)))
+
     hex_gdf = gpd.GeoDataFrame(
         {"hex": hexagon_index, "geometry": hexagon_boundaries}, crs="EPSG:4326"
     )
     hex_gdf = hex_gdf.drop_duplicates("hex")
+
+
     if save is True:
         if save_name is None:
             save_name = f"Hex{res}.geosjon"

@@ -1,12 +1,22 @@
 import folium
 import numpy as np
+
 import utils
 
 CHICAGO_COORD = [41.91364, -87.72645]
 
 
-def create_choropleth(df, target_col, agg_col, target_name, cmap='YlOrRd',
-                      agg_strategy='median', log_scale=False, use_hexes=False, geo_json=None):
+def create_choropleth(
+    df,
+    target_col,
+    agg_col,
+    target_name,
+    cmap="YlOrRd",
+    agg_strategy="median",
+    log_scale=False,
+    use_hexes=False,
+    geo_json=None,
+):
     """
     This function creates a folium choropleth based on different targets of the given data.
     ----------------------------------------------
@@ -29,8 +39,12 @@ def create_choropleth(df, target_col, agg_col, target_name, cmap='YlOrRd',
     if use_hexes:
         key = "feature.id"
         opacity = 0.6
-    data = df.groupby([agg_col])[target_col].agg(agg_strategy).reset_index(name=target_name)
-    data[agg_col] = data[agg_col].astype('str')
+    data = (
+        df.groupby([agg_col])[target_col]
+        .agg(agg_strategy)
+        .reset_index(name=target_name)
+    )
+    data[agg_col] = data[agg_col].astype("str")
     base_map = folium.Map(location=CHICAGO_COORD, tiles="cartodbpositron")
     legend_name = f"{target_name} per {agg_col}"
     if log_scale:
@@ -44,8 +58,8 @@ def create_choropleth(df, target_col, agg_col, target_name, cmap='YlOrRd',
         key_on=key,
         fill_color=cmap,
         fill_opacity=opacity,
-        line_opacity=.3,
-        legend_name=legend_name
+        line_opacity=0.3,
+        legend_name=legend_name,
     ).add_to(base_map)
 
     folium.TileLayer("cartodbdark_matter", name="dark mode", control=True).add_to(

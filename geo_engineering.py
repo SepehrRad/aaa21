@@ -1,8 +1,10 @@
-import geopandas
-import hexagon
-import h3.api.numpy_int as h3
 import json
+
+import geopandas
+import h3.api.numpy_int as h3
 from geojson.feature import *
+
+import hexagon
 
 
 def hexagons_to_geojson(df_with_hex, res):
@@ -18,8 +20,7 @@ def hexagons_to_geojson(df_with_hex, res):
     list_features = []
 
     for i, row in df_with_hex.iterrows():
-        feature = Feature(geometry=row[f'hex_{res}_geometry'],
-                          id=row[f'hex_{res}'])
+        feature = Feature(geometry=row[f"hex_{res}_geometry"], id=row[f"hex_{res}"])
         list_features.append(feature)
 
     feat_collection = FeatureCollection(list_features)
@@ -39,16 +40,30 @@ def _get_hexes(df):
     :return
         pandas.DataFrame: The data frame with additional hex columns
     """
-    df['hex_7'] = hexagon.get_hexagon_vect(lat=df["Community Area Center Lat"],
-                                           lng=df["Community Area Center Long"], resolution=7)
-    df['hex_6'] = hexagon.get_hexagon_vect(lat=df["Community Area Center Lat"],
-                                           lng=df["Community Area Center Long"], resolution=6)
+    df["hex_7"] = hexagon.get_hexagon_vect(
+        lat=df["Community Area Center Lat"],
+        lng=df["Community Area Center Long"],
+        resolution=7,
+    )
+    df["hex_6"] = hexagon.get_hexagon_vect(
+        lat=df["Community Area Center Lat"],
+        lng=df["Community Area Center Long"],
+        resolution=6,
+    )
 
-    df['hex_6_geometry'] = df.hex_6.apply(lambda x: {"type": "Polygon", "coordinates":
-        [h3.h3_to_geo_boundary(h=x, geo_json=True)]})
+    df["hex_6_geometry"] = df.hex_6.apply(
+        lambda x: {
+            "type": "Polygon",
+            "coordinates": [h3.h3_to_geo_boundary(h=x, geo_json=True)],
+        }
+    )
 
-    df['hex_7_geometry'] = df.hex_7.apply(lambda x: {"type": "Polygon", "coordinates":
-        [h3.h3_to_geo_boundary(h=x, geo_json=True)]})
+    df["hex_7_geometry"] = df.hex_7.apply(
+        lambda x: {
+            "type": "Polygon",
+            "coordinates": [h3.h3_to_geo_boundary(h=x, geo_json=True)],
+        }
+    )
     return df
 
 
@@ -65,16 +80,28 @@ def _prepare_for_merge(df, gdf):
         geoPandas.GeoDataFrame: The processed geo data frame
     """
     df.dropna(inplace=True)
-    df['Pickup Community Area'] = df['Pickup Community Area'].astype(float).astype(int)
-    df['Dropoff Community Area'] = df['Dropoff Community Area'].astype(float).astype(int)
-    gdf['area_numbe'] = gdf['area_numbe'].astype(float).astype(int)
-    gdf['Community Area Center'] = gdf.geometry.centroid
-    gdf["Community Area Center Lat"] = gdf['Community Area Center'].y
-    gdf["Community Area Center Long"] = gdf['Community Area Center'].x
+    df["Pickup Community Area"] = df["Pickup Community Area"].astype(float).astype(int)
+    df["Dropoff Community Area"] = (
+        df["Dropoff Community Area"].astype(float).astype(int)
+    )
+    gdf["area_numbe"] = gdf["area_numbe"].astype(float).astype(int)
+    gdf["Community Area Center"] = gdf.geometry.centroid
+    gdf["Community Area Center Lat"] = gdf["Community Area Center"].y
+    gdf["Community Area Center Long"] = gdf["Community Area Center"].x
     gdf = _get_hexes(gdf)
-    gdf = gdf[['area_numbe', 'geometry', 'Community Area Center',
-               "Community Area Center Lat", "Community Area Center Long", "hex_6", "hex_7",
-               "hex_6_geometry", "hex_7_geometry"]]
+    gdf = gdf[
+        [
+            "area_numbe",
+            "geometry",
+            "Community Area Center",
+            "Community Area Center Lat",
+            "Community Area Center Long",
+            "hex_6",
+            "hex_7",
+            "hex_6_geometry",
+            "hex_7_geometry",
+        ]
+    ]
     return df, gdf
 
 
@@ -88,18 +115,30 @@ def _merge_geo_information(df, gdf):
     :return
         geoPandas.GeoDataFrame: The merged geo data frame
     """
-    merged_df = df.merge(gdf, how="left", validate='m:1', left_on='Pickup Community Area', right_on='area_numbe')
-    merged_df = merged_df.merge(gdf, how="left", validate='m:1', left_on='Dropoff Community Area',
-                                right_on='area_numbe', suffixes=("_pickup", "_dropoff"))
+    merged_df = df.merge(
+        gdf,
+        how="left",
+        validate="m:1",
+        left_on="Pickup Community Area",
+        right_on="area_numbe",
+    )
+    merged_df = merged_df.merge(
+        gdf,
+        how="left",
+        validate="m:1",
+        left_on="Dropoff Community Area",
+        right_on="area_numbe",
+        suffixes=("_pickup", "_dropoff"),
+    )
     # Casting pandas Dataframe to GeoPandas Dataframe
-    merged_gdf = geopandas.GeoDataFrame(merged_df, geometry='geometry_pickup')
-    merged_gdf.drop(columns=['area_numbe_dropoff', 'area_numbe_pickup'], inplace=True)
+    merged_gdf = geopandas.GeoDataFrame(merged_df, geometry="geometry_pickup")
+    merged_gdf.drop(columns=["area_numbe_dropoff", "area_numbe_pickup"], inplace=True)
     return merged_gdf
 
 
 def add_community_areas_with_hexagons(df, return_geojson=False):
     """
-    This is a wrapper function that merges the geo information from the community areas 
+    This is a wrapper function that merges the geo information from the community areas
     into the original data frame.
     ----------------------------------------------
     :param

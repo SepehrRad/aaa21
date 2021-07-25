@@ -54,9 +54,8 @@ def create_choropleth(
             data,
             how="left",
             left_on="area_num_1",
-            right_on="Dropoff Community Area"
+            right_on=agg_col
         )
-    data.info()
     choropleth = folium.Choropleth(
         geo_data=geo_json,
         name="choropleth",

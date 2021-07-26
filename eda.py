@@ -33,12 +33,13 @@ def create_choropleth(
         folium.Choropleth: The created choropleth
     """
     key = "feature.properties.area_num_1"
-    opacity = 0.9
+    opacity = 0.7
+    highlight = True
     if geo_json is None:
         geo_json = utils.read_geo_dataset("community_areas.geojson")
     if use_hexes:
         key = "feature.id"
-        opacity = 0.6
+        highlight = False
     data = (
         df.groupby([agg_col])[target_col].agg(agg_strategy).reset_index(name=target_name)
     )
@@ -66,7 +67,7 @@ def create_choropleth(
         fill_opacity=opacity,
         line_opacity=0.3,
         legend_name=legend_name,
-        highlight=True,
+        highlight=highlight,
     ).add_to(base_map)
 
     folium.TileLayer("cartodbdark_matter", name="dark mode", control=True).add_to(

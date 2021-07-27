@@ -7,15 +7,15 @@ CHICAGO_COORD = [41.91364, -87.72645]
 
 
 def create_choropleth(
-    df,
-    target_col,
-    agg_col,
-    target_name,
-    cmap="YlOrRd",
-    agg_strategy="median",
-    log_scale=False,
-    use_hexes=False,
-    geo_json=None,
+        df,
+        target_col,
+        agg_col,
+        target_name,
+        cmap="YlOrRd",
+        agg_strategy="median",
+        log_scale=False,
+        use_hexes=False,
+        geo_json=None,
 ):
     """
     This function creates a folium choropleth based on different targets of the given data.
@@ -41,8 +41,8 @@ def create_choropleth(
         opacity = 0.6
     data = (
         df.groupby([agg_col])[target_col]
-        .agg(agg_strategy)
-        .reset_index(name=target_name)
+            .agg(agg_strategy)
+            .reset_index(name=target_name)
     )
     data[agg_col] = data[agg_col].astype("str")
     base_map = folium.Map(location=CHICAGO_COORD, tiles="cartodbpositron")
@@ -69,4 +69,26 @@ def create_choropleth(
         base_map
     )
     folium.LayerControl().add_to(base_map)
+    return base_map
+
+
+def create_top_ten_map(
+        community_areas,
+):
+    """
+    This function creates a folium GeoJson map with the boundaries of given Community Areas.
+    ----------------------------------------------
+    :param
+        community_areas(pd.Series): Community Areas to be plotted on map
+    :return:
+        folium.GeoJson: The created map
+    """
+
+    geo_json = utils.read_geo_dataset("community_areas.geojson")
+    geo_json = geo_json.loc[geo_json["community"].isin(community_areas)]
+    base_map = folium.Map(location=CHICAGO_COORD, tiles="cartodbpositron")
+    folium.GeoJson(data=geo_json,
+                   popup=folium.GeoJsonPopup(fields=['community']),
+                   style_function=lambda x: {'fillColor': 'orange', 'color': 'black', 'weight': 1}
+                   ).add_to(base_map)
     return base_map

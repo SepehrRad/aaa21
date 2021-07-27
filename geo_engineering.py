@@ -162,6 +162,14 @@ def add_community_areas_with_hexagons(df, return_geojson=False):
 
 
 def add_community_names(df):
+    """
+    This function adds the names of Community Area names to a pd.DataFrame.
+    ----------------------------------------------
+    :param
+        df(pandas.DataFrame): Given data frame
+    :return
+        merged_df(pandas.DataFrame): DataFrame with Community Area names
+    """
     gdf = geopandas.read_file("data/community_areas.geojson")
     df.dropna(inplace=True)
     df["Pickup Community Area"] = df["Pickup Community Area"].astype(float).astype(int)

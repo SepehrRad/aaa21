@@ -7,15 +7,15 @@ CHICAGO_COORD = [41.86364, -87.72645]
 
 
 def create_choropleth(
-        df,
-        target_col,
-        agg_col,
-        target_name,
-        cmap="YlOrRd",
-        agg_strategy="median",
-        log_scale=False,
-        use_hexes=False,
-        geo_json=None,
+    df,
+    target_col,
+    agg_col,
+    target_name,
+    cmap="YlOrRd",
+    agg_strategy="median",
+    log_scale=False,
+    use_hexes=False,
+    geo_json=None,
 ):
     """
     This function creates a folium choropleth based on different targets of the given data.
@@ -41,7 +41,9 @@ def create_choropleth(
         key = "feature.id"
         highlight = False
     data = (
-        df.groupby([agg_col])[target_col].agg(agg_strategy).reset_index(name=target_name)
+        df.groupby([agg_col])[target_col]
+        .agg(agg_strategy)
+        .reset_index(name=target_name)
     )
     data[agg_col] = data[agg_col].astype("str")
     base_map = folium.Map(location=CHICAGO_COORD, tiles="cartodbpositron")
@@ -52,10 +54,7 @@ def create_choropleth(
     data[target_name] = data[target_name].round(2)
     if not use_hexes:
         geo_json = geo_json.merge(
-            data,
-            how="left",
-            left_on="area_num_1",
-            right_on=agg_col
+            data, how="left", left_on="area_num_1", right_on=agg_col
         )
     choropleth = folium.Choropleth(
         geo_data=geo_json,
@@ -78,11 +77,15 @@ def create_choropleth(
     )
     folium.LayerControl().add_to(base_map)
     if not use_hexes:
-        choropleth.geojson.add_child(folium.features.GeoJsonTooltip(fields=['community', target_name],
-                                                                    aliases=[f'{agg_col}: ', f'{target_name}: '],
-                                                                    style=(
-                                                                        "background-color: white; color: #333333; "
-                                                                        "font-family: arial; "
-                                                                        "font-size: 12px; padding: 10px;"),
-                                                                    ))
+        choropleth.geojson.add_child(
+            folium.features.GeoJsonTooltip(
+                fields=["community", target_name],
+                aliases=[f"{agg_col}: ", f"{target_name}: "],
+                style=(
+                    "background-color: white; color: #333333; "
+                    "font-family: arial; "
+                    "font-size: 12px; padding: 10px;"
+                ),
+            )
+        )
     return base_map

@@ -1,132 +1,136 @@
 import folium
+import branca.colormap as cm
+import matplotlib.pyplot
+import numpy as np
 
 import hexagon
-import utils
 import seaborn as sns
 from matplotlib import pyplot as plt
-import numpy as np
-import pandas as pd
-
-
-def add_time_buckets(
-        df
-):
-    conditions = [
-        (df['Trip Start Hour'] >= 22) & (df['Trip Start Hour'] <= 3),
-        (df['Trip Start Hour'] > 3) & (df['Trip Start Hour'] <= 9),
-        (df['Trip Start Hour'] > 9) & (df['Trip Start Hour'] <= 15),
-        (df['Trip Start Hour'] > 15) & (df['Trip Start Hour'] <=21)
-    ]
-    time_buckets = ['22-4h', '4-10h', '10-16h', '16-22h']
-    df['Time Bucket'] = np.select(conditions, time_buckets)
-    return df
-
-
-def add_time_interval(
-        df
-):
-    """
-    This function adds time zones (morning, evening, etc.) based on the hour of the day.
-    ----------------------------------------------
-    :param
-        df(pd.DataFrame): DataFrame to which time zone information should be added.
-    """
-    # Pickup time interval
-    df.loc[df['Trip Start Hour'].between(5, 11, inclusive='left'), 'Pickup Time_Interval'] = 'morning'
-    df.loc[df['Trip Start Hour'].between(11, 17, inclusive='left'), 'Pickup Time_Interval'] = 'midday'
-    df.loc[df['Trip Start Hour'].between(17, 23, inclusive='left'), 'Pickup Time_Interval'] = 'evening'
-    df.loc[((df['Trip Start Hour'] >= 23) | (df['Trip Start Hour'] < 5)), 'Pickup Time_Interval'] = 'night'
-
-    return df
 
 
 def total_countplot(
         df,
-        time_interval = False
+        time_interval=False
 ):
-    sns.color_palette("dark")
+    col = 'Pickup Time_Interval'
+    title = "Total annual number of trips per time interval"
     if time_interval is False:
         col = 'Trip Start Hour'
-    else:
-        col = 'Pickup Time_Interval'
-    plot = sns.countplot(data=df, x=col)
+        title = "Total annual number of trips per hour"
+
+    sns.countplot(data=df, x=col)
     plt.ticklabel_format(style='plain', axis='y', useOffset=False)
-    return plot
+    plt.title(title)
+    plt.show()
 
 
 def weekend_weekday_countplot(
         df,
-        time_interval = False,
-        weekdays = False
+        time_interval=False,
+        weekdays=False,
+        sharey=False
 ):
-    sns.color_palette("dark")
     if time_interval is False:
         col = 'Trip Start Hour'
+        title = "Annual number of trips per hour"
     else:
         col = 'Pickup Time_Interval'
+        title = "Annual number of trips per time interval"
     if weekdays is False:
         hue = None
     else:
         hue = 'Trip Start Weekday'
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=sharey)
     sns.countplot(data=df.loc[df['Trip Start Is Weekend'] == 0], x=col, ax=axes[0], hue=hue)
-    axes[0].set_title('Weekdays')
+    axes[0].set_title(title + ' - Weekdays')
     sns.countplot(data=df.loc[df['Trip Start Is Weekend'] == 1], x=col, ax=axes[1], hue=hue)
-    axes[1].set_title('Weekend')
+    axes[1].set_title(title + ' - Weekend')
 
     axes[0].ticklabel_format(useOffset=False, style="plain", axis="y")
     axes[1].ticklabel_format(useOffset=False, style="plain", axis="y")
 
 
-def area_peak_hours(
-        df
+def days_of_week_countplot(
+        df,
+        time_interval=False
 ):
-    # Returns a list of areas with their peak hour
-    df_grp = df.groupby(['Pickup Community Area'])['Trip Start Hour'].apply(pd.Series.value_counts)
+    hue_order=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    if time_interval is False:
+        col = 'Trip Start Hour'
+        title = "Day of the weeks' trips - Hourly"
+    else:
+        col = 'Pickup Time_Interval'
+        title = "Day of the week' trips - Per time interval"
+    sns.countplot(data=df, x=col, hue='Pickup Day', hue_order=hue_order)
+    plt.ticklabel_format(style='plain', axis='y', useOffset=False)
+    plt.title(title)
+    plt.legend(bbox_to_anchor=(1.1, 1.05))
+    plt.show()
+
+
+def area_peak_hours(
+        df,
+        time_zone=None
+):
+    if time_zone is not None:
+        df = df.loc[df['Pickup Time_Interval'] == time_zone]
+    df_grp = df.groupby(['Pickup Community Area', 'Trip Start Hour']).size().reset_index(name="Total Trips")
+    df_grp = df_grp.loc[df_grp.groupby('Pickup Community Area')['Total Trips'].idxmax()]
     return df_grp
+
+CHICAGO_COORD = [41.91364, -87.72645]
 
 
 def area_peak_hours_map(
         df,
-        gdf
+        gdf,
+        time_zone=None
 ):
-    base_map = folium.Map(location=[41.91364, -87.72645])
+    legend_name = "Peak Hour per Pickup Community Area"
+    threshold = [0, 4, 8, 12, 16, 20, 24]
+    base_map = folium.Map(location=CHICAGO_COORD, tiles="cartodbpositron")
+    if time_zone is not None:
+        df = df.loc[df['Pickup Time_Interval'] == time_zone]
+        legend_name = legend_name + " during " + time_zone
+        if time_zone is not 'night':
+            threshold = df['Trip Start Hour'].unique()
+            _ = threshold[-1]
+            _ = _+1
+            threshold = np.append(threshold, _)
+        #else:
+            #threshold = df['Trip Start Hour'].unique()
+            #_ = threshold[-2]
+            #_ = _ + 1
+            #threshold = np.append(threshold, _)
+    df = df.groupby(['Pickup Community Area', 'Trip Start Hour']).size().reset_index(name="Total Trips")
+    df = df.loc[df.groupby('Pickup Community Area')['Total Trips'].idxmax()]
+
+    df['Pickup Community Area'] = df['Pickup Community Area'].astype('float').astype('int').astype('str')
+    #linear = cm.linear.YlOrRd_09.scale(0,23).to_step(n=24, index=range(0, 23))
+    #colormap = cm.LinearColormap(vmin=df['Trip Start Hour'].min(), vmax=df['Trip Start Hour'].max(),colors=['red','lightblue'])
     folium.Choropleth(
+        data=df,
         geo_data=gdf,
         name="choropleth",
-        key_on="feature.properties.hex",
-        fill_color="YlGn",
-        fill_opacity=0.7,
-        line_opacity=.1,
-        legend_name="Total Trips",
+        columns=['Pickup Community Area', 'Trip Start Hour'],
+        key_on="feature.properties.area_num_1",
+        fill_color='YlOrRd',
+        bins=6,
+        fill_opacity=0.6,
+        line_opacity=0.3,
+        legend_name=legend_name,
+        threshold_scale=threshold
     ).add_to(base_map)
-
+    """
     geo_j = gdf.to_json()
     geo_j = folium.GeoJson(data=geo_j, style_function=lambda x: {'fillColor': 'orange'})
     geo_j.add_to(base_map)
-
-    return base_map
-
-
-def hex_peak_hours_map():
-
-    hex_gdf = hexagon.census_tract_to_hexagon(save=True)
-    base_map = folium.Map(location=[41.91364, -87.72645], zoom_start=11)
-    geo_j = folium.GeoJson(data=hex_gdf, style_function=lambda x: {'fillColor': 'orange'})
-    geo_j.add_to(base_map)
-    return base_map
-    """base_map = folium.Map(location=[41.91364, -87.72645])
-    folium.Choropleth(
-        geo_data=hex_gdf,
-        name="choropleth",
-        data=gdf,
-        columns=["hex", "Count"],
-        key_on="feature.properties.hex",
-        fill_color="YlGn",
-        fill_opacity=0.7,
-        line_opacity=.1,
-        legend_name="Total Trips",
-    ).add_to(base_map)
-
+    """
+    folium.TileLayer("cartodbdark_matter", name="dark mode", control=True).add_to(
+        base_map
+    )
+    folium.TileLayer("openstreetmap", name="open street map", control=True).add_to(
+        base_map
+    )
     folium.LayerControl().add_to(base_map)
-    base_map"""
+    return base_map

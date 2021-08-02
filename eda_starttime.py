@@ -1,11 +1,9 @@
 import folium
-import branca.colormap as cm
-import matplotlib.pyplot
 import numpy as np
-
-import hexagon
 import seaborn as sns
 from matplotlib import pyplot as plt
+
+CHICAGO_COORD = [41.91364, -87.72645]
 
 
 def total_countplot(
@@ -45,10 +43,14 @@ def weekend_weekday_countplot(
     axes[0].set_title(title + ' - Weekdays')
     sns.countplot(data=df.loc[df['Trip Start Is Weekend'] == 1], x=col, ax=axes[1], hue=hue)
     axes[1].set_title(title + ' - Weekend')
-
     axes[0].ticklabel_format(useOffset=False, style="plain", axis="y")
     axes[1].ticklabel_format(useOffset=False, style="plain", axis="y")
-
+    if time_interval is False:
+        axes[0].set_ylim(40000, 1120000)
+        axes[1].set_ylim(40000, 1120000)
+    else:
+        axes[0].set_ylim(70000, 6000000)
+        axes[1].set_ylim(70000, 6000000)
 
 def days_of_week_countplot(
         df,
@@ -78,17 +80,22 @@ def area_peak_hours(
     df_grp = df_grp.loc[df_grp.groupby('Pickup Community Area')['Total Trips'].idxmax()]
     return df_grp
 
-CHICAGO_COORD = [41.91364, -87.72645]
-
 
 def area_peak_hours_map(
         df,
         gdf,
-        time_zone=None
+        time_zone=None,
+        cmap="YlOrRd",
+        use_hexes=False
 ):
+    key = "feature.properties.area_num_1"
+    opacity = 0.7
     legend_name = "Peak Hour per Pickup Community Area"
     threshold = [0, 4, 8, 12, 16, 20, 24]
     base_map = folium.Map(location=CHICAGO_COORD, tiles="cartodbpositron")
+    if use_hexes:
+        key = "feature.id"
+        opacity = 0.6
     if time_zone is not None:
         df = df.loc[df['Pickup Time_Interval'] == time_zone]
         legend_name = legend_name + " during " + time_zone
@@ -97,35 +104,24 @@ def area_peak_hours_map(
             _ = threshold[-1]
             _ = _+1
             threshold = np.append(threshold, _)
-        #else:
-            #threshold = df['Trip Start Hour'].unique()
-            #_ = threshold[-2]
-            #_ = _ + 1
-            #threshold = np.append(threshold, _)
     df = df.groupby(['Pickup Community Area', 'Trip Start Hour']).size().reset_index(name="Total Trips")
     df = df.loc[df.groupby('Pickup Community Area')['Total Trips'].idxmax()]
 
     df['Pickup Community Area'] = df['Pickup Community Area'].astype('float').astype('int').astype('str')
-    #linear = cm.linear.YlOrRd_09.scale(0,23).to_step(n=24, index=range(0, 23))
-    #colormap = cm.LinearColormap(vmin=df['Trip Start Hour'].min(), vmax=df['Trip Start Hour'].max(),colors=['red','lightblue'])
+
     folium.Choropleth(
         data=df,
         geo_data=gdf,
         name="choropleth",
         columns=['Pickup Community Area', 'Trip Start Hour'],
-        key_on="feature.properties.area_num_1",
-        fill_color='YlOrRd',
-        bins=6,
-        fill_opacity=0.6,
+        key_on=key,
+        fill_color=cmap,
+        fill_opacity=opacity,
         line_opacity=0.3,
         legend_name=legend_name,
         threshold_scale=threshold
     ).add_to(base_map)
-    """
-    geo_j = gdf.to_json()
-    geo_j = folium.GeoJson(data=geo_j, style_function=lambda x: {'fillColor': 'orange'})
-    geo_j.add_to(base_map)
-    """
+
     folium.TileLayer("cartodbdark_matter", name="dark mode", control=True).add_to(
         base_map
     )

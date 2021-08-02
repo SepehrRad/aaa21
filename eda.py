@@ -1,9 +1,9 @@
 import folium
 import numpy as np
-
-import utils
 import seaborn as sns
 from matplotlib import pyplot as plt
+
+import utils
 
 CHICAGO_COORD = [41.91364, -87.72645]
 
@@ -76,13 +76,7 @@ def create_choropleth(
     return base_map
 
 
-def area_peak_hours_map(
-        df,
-        gdf,
-        time_zone=None,
-        cmap="YlOrRd",
-        use_hexes=False
-):
+def area_peak_hours_map(df, gdf, time_zone=None, cmap="YlOrRd", use_hexes=False):
     """
     This function creates a folium choropleth based on peak demand hours.
 
@@ -106,29 +100,35 @@ def area_peak_hours_map(
         key = "feature.id"
         opacity = 0.6
     if time_zone is not None:
-        df = df.loc[df['Pickup Time_Interval'] == time_zone]
+        df = df.loc[df["Pickup Time_Interval"] == time_zone]
         legend_name = legend_name + " during " + time_zone
-        if time_zone is not 'night':
-            threshold = df['Trip Start Hour'].unique()
+        if time_zone is not "night":
+            threshold = df["Trip Start Hour"].unique()
             _ = threshold[-1]
-            _ = _+1
+            _ = _ + 1
             threshold = np.append(threshold, _)
-    df = df.groupby(['Pickup Community Area', 'Trip Start Hour']).size().reset_index(name="Total Trips")
-    df = df.loc[df.groupby('Pickup Community Area')['Total Trips'].idxmax()]
+    df = (
+        df.groupby(["Pickup Community Area", "Trip Start Hour"])
+        .size()
+        .reset_index(name="Total Trips")
+    )
+    df = df.loc[df.groupby("Pickup Community Area")["Total Trips"].idxmax()]
 
-    df['Pickup Community Area'] = df['Pickup Community Area'].astype('float').astype('int').astype('str')
+    df["Pickup Community Area"] = (
+        df["Pickup Community Area"].astype("float").astype("int").astype("str")
+    )
 
     folium.Choropleth(
         data=df,
         geo_data=gdf,
         name="choropleth",
-        columns=['Pickup Community Area', 'Trip Start Hour'],
+        columns=["Pickup Community Area", "Trip Start Hour"],
         key_on=key,
         fill_color=cmap,
         fill_opacity=opacity,
         line_opacity=0.3,
         legend_name=legend_name,
-        threshold_scale=threshold
+        threshold_scale=threshold,
     ).add_to(base_map)
 
     folium.TileLayer("cartodbdark_matter", name="dark mode", control=True).add_to(
@@ -141,10 +141,7 @@ def area_peak_hours_map(
     return base_map
 
 
-def starttime_total_countplot(
-        df,
-        time_interval=False
-):
+def starttime_total_countplot(df, time_interval=False):
     """
     This function creates a countplot to visualize starting times distribution throughout the day.
 
@@ -156,23 +153,19 @@ def starttime_total_countplot(
     :return:
         pyplot.show: The created seaborn countplot.
     """
-    col = 'Pickup Time_Interval'
+    col = "Pickup Time_Interval"
     title = "Annual number of trips per time interval"
     if time_interval is False:
-        col = 'Trip Start Hour'
+        col = "Trip Start Hour"
         title = "Annual number of trips per hour"
 
     sns.countplot(data=df, x=col)
-    plt.ticklabel_format(style='plain', axis='y', useOffset=False)
+    plt.ticklabel_format(style="plain", axis="y", useOffset=False)
     plt.title(title)
     plt.show()
 
 
-def starttime_weekend_weekday_countplot(
-        df,
-        time_interval=False,
-        weekdays=False
-):
+def starttime_weekend_weekday_countplot(df, time_interval=False, weekdays=False):
     """
     This function creates two countplots to visualize difference in temporal demand difference between weekdays and
     weekends.
@@ -187,20 +180,24 @@ def starttime_weekend_weekday_countplot(
         pyplot.show: The created seaborn countplot.
     """
     if time_interval is False:
-        col = 'Trip Start Hour'
+        col = "Trip Start Hour"
         title = "Annual number of trips per hour"
     else:
-        col = 'Pickup Time_Interval'
+        col = "Pickup Time_Interval"
         title = "Annual number of trips per time interval"
     if weekdays is False:
         hue = None
     else:
-        hue = 'Trip Start Weekday'
+        hue = "Trip Start Weekday"
     fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=sharey)
-    sns.countplot(data=df.loc[df['Trip Start Is Weekend'] == 0], x=col, ax=axes[0], hue=hue)
-    axes[0].set_title(title + ' - Weekdays')
-    sns.countplot(data=df.loc[df['Trip Start Is Weekend'] == 1], x=col, ax=axes[1], hue=hue)
-    axes[1].set_title(title + ' - Weekend')
+    sns.countplot(
+        data=df.loc[df["Trip Start Is Weekend"] == 0], x=col, ax=axes[0], hue=hue
+    )
+    axes[0].set_title(title + " - Weekdays")
+    sns.countplot(
+        data=df.loc[df["Trip Start Is Weekend"] == 1], x=col, ax=axes[1], hue=hue
+    )
+    axes[1].set_title(title + " - Weekend")
     axes[0].ticklabel_format(useOffset=False, style="plain", axis="y")
     axes[1].ticklabel_format(useOffset=False, style="plain", axis="y")
     if time_interval is False:
@@ -211,10 +208,7 @@ def starttime_weekend_weekday_countplot(
         axes[1].set_ylim(70000, 6000000)
 
 
-def starttime_days_of_week_countplot(
-        df,
-        time_interval=False
-):
+def starttime_days_of_week_countplot(df, time_interval=False):
     """
     This function creates a countplots to visualize difference in temporal demand difference between each day of
     the week.
@@ -227,24 +221,29 @@ def starttime_days_of_week_countplot(
     :return:
         pyplot.show: The created seaborn countplot.
     """
-    hue_order=['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    hue_order = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
     if time_interval is False:
-        col = 'Trip Start Hour'
+        col = "Trip Start Hour"
         title = "Day of the weeks' trips - Hourly"
     else:
-        col = 'Pickup Time_Interval'
+        col = "Pickup Time_Interval"
         title = "Day of the week' trips - Per time interval"
-    sns.countplot(data=df, x=col, hue='Pickup Day', hue_order=hue_order)
-    plt.ticklabel_format(style='plain', axis='y', useOffset=False)
+    sns.countplot(data=df, x=col, hue="Pickup Day", hue_order=hue_order)
+    plt.ticklabel_format(style="plain", axis="y", useOffset=False)
     plt.title(title)
     plt.legend(bbox_to_anchor=(1.1, 1.05))
     plt.show()
 
 
-def starttime_area_peak_hours(
-        df,
-        time_zone=None
-):
+def starttime_area_peak_hours(df, time_zone=None):
     """
     This function returns a grouped series of community area IDs and their peak demand hour.
 
@@ -257,7 +256,11 @@ def starttime_area_peak_hours(
         pandas.Series: A series of community area IDs and their peak demand hour.
     """
     if time_zone is not None:
-        df = df.loc[df['Pickup Time_Interval'] == time_zone]
-    df_grp = df.groupby(['Pickup Community Area', 'Trip Start Hour']).size().reset_index(name="Total Trips")
-    df_grp = df_grp.loc[df_grp.groupby('Pickup Community Area')['Total Trips'].idxmax()]
+        df = df.loc[df["Pickup Time_Interval"] == time_zone]
+    df_grp = (
+        df.groupby(["Pickup Community Area", "Trip Start Hour"])
+        .size()
+        .reset_index(name="Total Trips")
+    )
+    df_grp = df_grp.loc[df_grp.groupby("Pickup Community Area")["Total Trips"].idxmax()]
     return df_grp

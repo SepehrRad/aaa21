@@ -102,11 +102,10 @@ def area_peak_hours_map(df, gdf, time_zone=None, cmap="YlOrRd", use_hexes=False)
     if time_zone is not None:
         df = df.loc[df["Pickup Time_Interval"] == time_zone]
         legend_name = legend_name + " during " + time_zone
-        if time_zone is not "night":
-            threshold = df["Trip Start Hour"].unique()
-            _ = threshold[-1]
-            _ = _ + 1
-            threshold = np.append(threshold, _)
+        threshold = df["Trip Start Hour"].unique()
+        _ = threshold[-1]
+        _ = _ + 1
+        threshold = np.append(threshold, _)
     df = (
         df.groupby(["Pickup Community Area", "Trip Start Hour"])
         .size()
@@ -189,7 +188,7 @@ def starttime_weekend_weekday_countplot(df, time_interval=False, weekdays=False)
         hue = None
     else:
         hue = "Trip Start Weekday"
-    fig, axes = plt.subplots(1, 2, figsize=(14, 6), sharey=sharey)
+    fig, axes = plt.subplots(1, 2, figsize=(14, 6))
     sns.countplot(
         data=df.loc[df["Trip Start Is Weekend"] == 0], x=col, ax=axes[0], hue=hue
     )

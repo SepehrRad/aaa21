@@ -3,7 +3,7 @@ import numpy as np
 
 import utils
 
-CHICAGO_COORD = [41.91364, -87.72645]
+CHICAGO_COORD = [41.86364, -87.72645]
 
 
 def create_choropleth(
@@ -33,12 +33,13 @@ def create_choropleth(
         folium.Choropleth: The created choropleth
     """
     key = "feature.properties.area_num_1"
-    opacity = 0.9
+    opacity = 0.7
+    highlight = True
     if geo_json is None:
         geo_json = utils.read_geo_dataset("community_areas.geojson")
     if use_hexes:
         key = "feature.id"
-        opacity = 0.6
+        highlight = False
     data = (
         df.groupby([agg_col])[target_col]
         .agg(agg_strategy)
@@ -50,7 +51,12 @@ def create_choropleth(
     if log_scale:
         data[target_name] = np.log(data[target_name])
         legend_name = legend_name + " (Log_Scale)"
-    folium.Choropleth(
+    data[target_name] = data[target_name].round(2)
+    if not use_hexes:
+        geo_json = geo_json.merge(
+            data, how="left", left_on="area_num_1", right_on=agg_col
+        )
+    choropleth = folium.Choropleth(
         geo_data=geo_json,
         name="choropleth",
         data=data,
@@ -60,6 +66,7 @@ def create_choropleth(
         fill_opacity=opacity,
         line_opacity=0.3,
         legend_name=legend_name,
+        highlight=highlight,
     ).add_to(base_map)
 
     folium.TileLayer("cartodbdark_matter", name="dark mode", control=True).add_to(
@@ -69,4 +76,16 @@ def create_choropleth(
         base_map
     )
     folium.LayerControl().add_to(base_map)
+    if not use_hexes:
+        choropleth.geojson.add_child(
+            folium.features.GeoJsonTooltip(
+                fields=["community", target_name],
+                aliases=[f"{agg_col}: ", f"{target_name}: "],
+                style=(
+                    "background-color: white; color: #333333; "
+                    "font-family: arial; "
+                    "font-size: 12px; padding: 10px;"
+                ),
+            )
+        )
     return base_map

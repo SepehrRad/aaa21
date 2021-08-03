@@ -68,7 +68,6 @@ def create_choropleth(
     folium.TileLayer("openstreetmap", name="open street map", control=True).add_to(
         base_map
     )
-    folium.LayerControl().add_to(base_map)
     return base_map
 
 

@@ -73,7 +73,7 @@ def _plot_clusters_boxplot(X, column_1, column_2,):
     ax2.set_ylabel(column_2)
     fig.tight_layout()
 
-def get_clusters_gmm(df,column_1, column_2,  n_init=20, init_params='kmeans', title, xlabel, ylabel, n_cluster, random_state=7, plot_sizes=False, plot_boxes = False):
+def get_clusters_gmm(df, column_1, column_2, title, xlabel, ylabel, n_cluster, n_init=20, init_params='kmeans', random_state=7, plot_sizes=False, plot_boxes = False):
 
     X = df[[column_1, column_2]]
     gmm = GaussianMixture(n_components=n_cluster, random_state=random_state, n_init=n_init, init_params=init_params).fit(X)

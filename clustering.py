@@ -12,7 +12,7 @@ import seaborn as sns
 def get_silhouette_score(df, column_1, column_2,  n_clusters,  n_init=20, init_params='kmeans',
                          metric="euclidean", sample_size=1000, random_state=7):
 
-    silhouette_score = []
+    s_score = []
     df = df[[column_1, column_2]]
 
     clusters = range(2, n_clusters+2)
@@ -20,20 +20,20 @@ def get_silhouette_score(df, column_1, column_2,  n_clusters,  n_init=20, init_p
     for cluster in clusters:
         model = GaussianMixture(n_components=cluster, n_init=n_init, init_params=init_params)
         labels = model.fit_predict(df)
-        silhouette_score.append(silhouette_score(df, labels, metric=metric, sample_size=sample_size, random_state=random_state))
+        s_score.append(silhouette_score(df, labels, metric=metric, sample_size=sample_size, random_state=random_state))
 
     # Plot the resulting Silhouette scores on a graph
     plt.figure(figsize=(16, 8), dpi=300)
-    plt.plot(clusters, silhouette_score, 'bo-', color='black')
+    plt.plot(clusters, s_score, 'bo-', color='black')
     plt.xlabel('n_clusters')
     plt.ylabel('Silhouette Score')
     plt.title('Identify the number of clusters using Silhouette Score')
     plt.show()
 
 
-def get_ellbow(df, range):
+def get_ellbow(df, n_clusters):
     distortions = []
-    K = range(1, range+2)
+    K = range(1, n_clusters+2)
 
     for k in K:
         kmeansModel = KMeans(n_clusters=k, init='k-means++', random_state=7)
@@ -41,7 +41,7 @@ def get_ellbow(df, range):
         distortions.append(kmeansModel.inertia_)
 
     fig = plt.figure(figsize=(6, 6))
-    ax = sns.lineplot(x=K, y=distortions_chicago, color='C3')
+    ax = sns.lineplot(x=K, y=distortions, color='C3')
     ax.set_title('Elbow method showing the optimal k', fontsize=16, fontweight='bold', pad=20)
     ax.set(xlabel='K', ylabel='Inertia')
     fig.tight_layout()
@@ -53,7 +53,8 @@ def _get_clusters_sizes(cluster):
     frequencies = pd.DataFrame(data=frequencies, columns=["Cluster", "Count"])
 
     fig = plt.figure(figsize=(5, 5))
-    ax = sns.barplot(data=frequencies, x="Cluster", y="Count", palette='bright')
+    ax = sns.barplot(data=frequencies, x="Cluster", y="Count",
+                palette=['green', 'blue', 'darkorchid', 'crimson', 'orange', 'darkturquoise'])
     ax.set_title("Cluster Size", fontsize=16, fontweight='bold', pad=20)
     ax.set_xlabel("Cluster")
     ax.set_ylabel("Size")
@@ -92,10 +93,10 @@ def get_clusters_gmm(df, column_1, column_2, title, xlabel, ylabel, n_cluster, n
     fig.tight_layout()
 
     if plot_sizes is True:
-        _get_cluster_sizes(cluster)
+        _get_clusters_sizes(cluster)
 
     if plot_boxes is True:
-        _plot_cluster_boxplot(X, column_1, column_2)
+        _plot_clusters_boxplot(X, column_1, column_2)
     return X, gmm
 
 
@@ -104,8 +105,8 @@ def get_clusters_kmeans(df,column_1, column_2, numerical_columns, title, xlabel,
     X = df[[column_1, column_2]]
 
     # scale numerical columns
-    ct = ColumnTransformer([('Standard Scaler', StandardScaler(), numerical_columns)])
-    X[numerical_columns] = ct.fit_transform(X)
+    #ct = ColumnTransformer([('Standard Scaler', StandardScaler(), numerical_columns)])
+    #X[numerical_columns] = ct.fit_transform(X)
 
     kmm = KMeans(n_clusters = n_cluster, init='k-means++', random_state=random_state).fit(X)
     cluster = kmm.predict(X)
@@ -121,9 +122,9 @@ def get_clusters_kmeans(df,column_1, column_2, numerical_columns, title, xlabel,
     fig.tight_layout()
 
     if plot_sizes is True:
-        _get_cluster_sizes(cluster)
+        _get_clusters_sizes(cluster)
 
     if plot_boxes is True:
-        _plot_cluster_boxplot(X, column_1, column_2)
+        _plot_clusters_boxplot(X, column_1, column_2)
     return X, kmm
 

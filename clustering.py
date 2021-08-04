@@ -40,7 +40,7 @@ def get_ellbow(df, n_clusters):
         kmeansModel.fit(df)
         distortions.append(kmeansModel.inertia_)
 
-    fig = plt.figure(figsize=(6, 6))
+    fig = plt.figure(figsize=(16, 8))
     ax = sns.lineplot(x=K, y=distortions, color='C3')
     ax.set_title('Elbow method showing the optimal k', fontsize=16, fontweight='bold', pad=20)
     ax.set(xlabel='K', ylabel='Inertia')
@@ -52,7 +52,7 @@ def _get_clusters_sizes(cluster):
     frequencies = np.asarray((unique, counts)).T
     frequencies = pd.DataFrame(data=frequencies, columns=["Cluster", "Count"])
 
-    fig = plt.figure(figsize=(5, 5))
+    fig = plt.figure(figsize=(12, 12))
     ax = sns.barplot(data=frequencies, x="Cluster", y="Count",
                 palette=['green', 'blue', 'darkorchid', 'crimson', 'orange', 'darkturquoise'])
     ax.set_title("Cluster Size", fontsize=16, fontweight='bold', pad=20)
@@ -61,7 +61,7 @@ def _get_clusters_sizes(cluster):
     fig.tight_layout()
 
 def _plot_clusters_boxplot(X, column_1, column_2,):
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
     sns.boxplot(x="cluster", y=column_1, ax=ax1, data=X,
                 palette=['green', 'blue', 'darkorchid', 'crimson', 'orange', 'darkturquoise'])
     ax1.set_title(f'Cluster - Feature {column_1}', fontsize=16, fontweight='bold', pad=20)
@@ -74,6 +74,16 @@ def _plot_clusters_boxplot(X, column_1, column_2,):
     ax2.set_ylabel(column_2)
     fig.tight_layout()
 
+def _plot_clusters_scatterplot(X, column_1, column_2, title, xlabel, ylabel,):
+    fig = plt.figure(figsize=(9, 9))
+    ax = sns.scatterplot(data=X, x=column_1, y=column_2, hue='cluster', s=20, alpha=0.1,
+                         palette=['green', 'blue', 'darkorchid', 'crimson', 'orange', 'darkturquoise'])
+    ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title='Cluster')
+    ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    fig.tight_layout()
+
 def get_clusters_gmm(df, column_1, column_2, title, xlabel, ylabel, n_cluster, n_init=20, init_params='kmeans', random_state=7, plot_sizes=False, plot_boxes = False):
 
     X = df[[column_1, column_2]]
@@ -83,21 +93,15 @@ def get_clusters_gmm(df, column_1, column_2, title, xlabel, ylabel, n_cluster, n
     X['cluster'] = cluster
     for k in range(n_cluster):
         X[f'cluster_{k}_prob'] = cluster_proba[:, k]
-    fig = plt.figure(figsize=(5, 5))
-    ax = sns.scatterplot(data=X, x=column_1, y=column_2, hue='cluster', s=10, alpha=0.1,
-                         palette='bright')
-    ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title='Cluster')
-    ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    fig.tight_layout()
+
+    _plot_clusters_scatterplot(X, column_1, column_2, title, xlabel, ylabel)
 
     if plot_sizes is True:
         _get_clusters_sizes(cluster)
 
     if plot_boxes is True:
         _plot_clusters_boxplot(X, column_1, column_2)
-    return X, gmm
+    #return X, gmm
 
 
 def get_clusters_kmeans(df,column_1, column_2, numerical_columns, title, xlabel, ylabel, n_cluster, random_state=7, plot_sizes=False, plot_boxes = False):
@@ -112,19 +116,12 @@ def get_clusters_kmeans(df,column_1, column_2, numerical_columns, title, xlabel,
     cluster = kmm.predict(X)
     X['cluster'] = cluster
 
-    fig = plt.figure(figsize=(5, 5))
-    ax = sns.scatterplot(data=X, x=column_1, y=column_2, hue='cluster', s=10, alpha=0.1,
-                         palette='bright')
-    ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title='Cluster')
-    ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    fig.tight_layout()
+    _plot_clusters_scatterplot(X, column_1, column_2, title, xlabel, ylabel)
 
     if plot_sizes is True:
         _get_clusters_sizes(cluster)
 
     if plot_boxes is True:
         _plot_clusters_boxplot(X, column_1, column_2)
-    return X, kmm
+    #return X, kmm
 

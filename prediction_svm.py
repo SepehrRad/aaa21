@@ -1,98 +1,60 @@
+import re
 import pandas as pd
-import datetime
-from datetime import datetime as dt
-from dateutil.relativedelta import *
+from fastai.tabular.all import *
+from sklearn.preprocessing import OneHotEncoder
 
 
-class TimeBasedCV(object):
-    """
-    Parameters
-    ----------
-    train_period: int
-        number of time units to include in each train set
-        default is 30
-    test_period: int
-        number of time units to include in each test set
-        default is 7
-    freq: string
-        frequency of input parameters. possible values are: days, months, years, weeks, hours, minutes, seconds
-        possible values designed to be used by dateutil.relativedelta class
-        deafault is days
-    """
+def split_data_sets_for_svm(df, temporal_resolution, test_size=0.2, validation_size=0.2):
+    data, target, cont_vars, cat_vars = _preprocess_data_for_svm(df=df, temporal_resolution=temporal_resolution)
+    enc = OneHotEncoder(drop='first')
+    enc_data = pd.DataFrame(enc.fit_transform(data[cat_vars]).toarray())
+    data = data.join(enc_data)
+    data = data.drop(columns=cat_vars)
 
-    def __init__(self, train_period=30, test_period=7, freq='days'):
-        self.train_period = train_period
-        self.test_period = test_period
-        self.freq = freq
+    # cont_vars, cat_vars = cont_cat_split(data, max_card=35, dep_var=target)
 
-    def split(self, data, date_column='Trip Start Timestamp', gap=1):
-        """
-        Generate indices to split data into training and test set
+    train_index = int(len(data) * (1 - test_size))
+    df_train = data[0:train_index]
+    df_test = data[train_index:]
 
-        Parameters
-        ----------
-        data: pandas DataFrame
-            your data, contain one column for the record date
-        date_column: string, deafult='record_date'
-            date of each record
+    # Setting indices for creating a validation set
+    start_index = len(df_train) - int(len(df_train) * validation_size)
+    end_index = len(df_train)
+    val_index = df_train.iloc[start_index:end_index].index.values
+    val_split = IndexSplitter(val_index)(range_of(df_train))
 
-        Returns
-        -------
-        train_index ,test_index:
-            list of tuples (train index, test index) similar to sklearn model selection
-        """
+    # Test set
+    test_data = TabularPandas(df_test, cat_names=cat_vars, cont_names=cont_vars, y_names=target,
+                              procs=[Categorify, FillMissing, Normalize])
 
-        # check that date_column exist in the data:
-        try:
-            data[date_column]
-        except:
-            raise KeyError(date_column)
+    # Train set
+    train_data = TabularPandas(df_train, cat_names=cat_vars, cont_names=cont_vars, y_names=target,
+                               procs=[Categorify, FillMissing, Normalize],
+                               splits=val_split,  y_block=RegressionBlock(n_out=1))
 
-        train_indices_list = []
-        test_indices_list = []
+    return train_data, test_data
 
-        validation_split_date = data[date_column].min().date() + eval(
-            'relativedelta(' + self.freq + '=self.train_period)')
 
-        start_train = validation_split_date - eval('relativedelta(' + self.freq + '=self.train_period)')
-        end_train = start_train + eval('relativedelta(' + self.freq + '=self.train_period)')
-        start_test = end_train + eval('relativedelta(' + self.freq + '=gap)')
-        end_test = start_test + eval('relativedelta(' + self.freq + '=self.test_period)')
-
-        while end_test < data[date_column].max().date():
-            # train indices:
-            cur_train_indices = list(data[(data[date_column].dt.date >= start_train) &
-                                          (data[date_column].dt.date < end_train)].index)
-
-            # test indices:
-            cur_test_indices = list(data[(data[date_column].dt.date >= start_test) &
-                                         (data[date_column].dt.date < end_test)].index)
-
-            print("Train period:", start_train, "-", end_train, ", Test period", start_test, "-", end_test,
-                  "# train records", len(cur_train_indices), ", # test records", len(cur_test_indices))
-
-            train_indices_list.append(cur_train_indices)
-            test_indices_list.append(cur_test_indices)
-
-            # update dates:
-            start_train = start_train + eval('relativedelta(' + self.freq + '=self.test_period)')
-            end_train = start_train + eval('relativedelta(' + self.freq + '=self.train_period)')
-            start_test = end_train + eval('relativedelta(' + self.freq + '=gap)')
-            end_test = start_test + eval('relativedelta(' + self.freq + '=self.test_period)')
-
-        # mimic sklearn output  
-        index_output = [(train, test) for train, test in zip(train_indices_list, test_indices_list)]
-
-        self.n_splits = len(index_output)
-
-        return index_output
-
-    def get_n_splits(self):
-        """
-        Returns the number of splitting iterations in the cross-validator
-        Returns
-        -------
-        n_splits : int
-            Returns the number of splitting iterations in the cross-validator.
-        """
-        return self.n_splits
+def _preprocess_data_for_svm(df, temporal_resolution):
+    if temporal_resolution == 'D':
+        df = add_datepart(df, 'Trip Start Timestamp', prefix='')
+    else:
+        df = add_datepart(df, 'Trip Start Timestamp', prefix='', time=True)
+        _ = [c for c in df.columns if ('minute' in c.lower() or 'second' in c.lower())]
+        df.drop(_, axis=1, inplace=True)
+    df = df.astype({'Week': 'uint32'})
+    df = df.astype({'Elapsed': 'int64'})
+    # Only Columns with more than 35 distinct values will be considered as continuous
+    target = f"Demand ({temporal_resolution})"
+    cont_vars, cat_vars = cont_cat_split(df, max_card=35, dep_var=target)
+    # Spacial temporal columns that should be considered as categories in an embedding structure
+    cont_vars.remove('Dayofyear')
+    cat_vars.append('Dayofyear')
+    cont_vars.remove('Week')
+    cat_vars.append('Week')
+    hex_regex = re.compile(".*hex")
+    _ = list(filter(hex_regex.match, cont_vars))
+    if bool(_):
+        [cont_vars.remove(entry) for entry in _]
+        cat_vars.extend(_)
+    return df, target, cont_vars, cat_vars

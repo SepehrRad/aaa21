@@ -1,17 +1,15 @@
-import re
 import pandas as pd
 from fastai.tabular.all import *
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 
 def split_data_sets_for_svm(df, temporal_resolution, test_size=0.2, validation_size=0.2):
     data, target, cont_vars, cat_vars = _preprocess_data_for_svm(df=df, temporal_resolution=temporal_resolution)
     enc = OneHotEncoder(drop='first')
     enc_data = pd.DataFrame(enc.fit_transform(data[cat_vars]).toarray())
+    enc_data = enc_data.astype("category")
     data = data.join(enc_data)
     data = data.drop(columns=cat_vars)
-
-    # cont_vars, cat_vars = cont_cat_split(data, max_card=35, dep_var=target)
 
     train_index = int(len(data) * (1 - test_size))
     df_train = data[0:train_index]
@@ -20,19 +18,9 @@ def split_data_sets_for_svm(df, temporal_resolution, test_size=0.2, validation_s
     # Setting indices for creating a validation set
     start_index = len(df_train) - int(len(df_train) * validation_size)
     end_index = len(df_train)
-    val_index = df_train.iloc[start_index:end_index].index.values
-    val_split = IndexSplitter(val_index)(range_of(df_train))
+    df_val = df_train[start_index:end_index]
 
-    # Test set
-    test_data = TabularPandas(df_test, cat_names=cat_vars, cont_names=cont_vars, y_names=target,
-                              procs=[Categorify, FillMissing, Normalize])
-
-    # Train set
-    train_data = TabularPandas(df_train, cat_names=cat_vars, cont_names=cont_vars, y_names=target,
-                               procs=[Categorify, FillMissing, Normalize],
-                               splits=val_split,  y_block=RegressionBlock(n_out=1))
-
-    return train_data, test_data
+    return df_train, df_val, df_test
 
 
 def _preprocess_data_for_svm(df, temporal_resolution):

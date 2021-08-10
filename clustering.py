@@ -8,6 +8,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.compose import ColumnTransformer
 import seaborn as sns
 from pandas.plotting import parallel_coordinates
+import plotly.express as px
 
 
 def get_silhouette_score(df, column_1, column_2, n_clusters, n_init=20, init_params='kmeans',
@@ -109,7 +110,7 @@ def _plot_clusters_scatterplot(X, column_1, column_2, title, xlabel, ylabel, ):
 def _plot_clusters_parallel_coordinates(X, title, xlabel, ylabel):
     fig = plt.figure(figsize=(9, 9))
     ax = parallel_coordinates(frame=X,
-                              class_column=X["cluster"],
+                              class_column="cluster",
                               color=['green', 'blue', 'darkorchid', 'crimson', 'orange', 'darkturquoise'],
                               )
     ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title='Cluster')
@@ -118,6 +119,25 @@ def _plot_clusters_parallel_coordinates(X, title, xlabel, ylabel):
     ax.set_ylabel(ylabel)
     fig.tight_layout()
 
+def _plot_clusters_parallel_coordinates_plotly(X, title):
+    fig = px.parallel_coordinates(X,
+                                  dimensions=X[X.columns.difference(["cluster"])],
+                                  color="cluster",
+                                  title=title,
+                                  )
+    fig.show()
+
+def _plot_clusters_pairplot(X, title):
+    fig = plt.figure(figsize=(20, 20))
+    ax = sns.pairplot(X,
+                      hue="cluster",
+                      corner=True,
+                      palette=['green', 'blue', 'darkorchid', 'crimson', 'orange', 'darkturquoise'],
+                      height = 2.5,
+                      aspect=2,
+                      )
+    ax.fig.suptitle(title, y=1.08)
+    fig.tight_layout()
 
 def _cyclical_feature_transformer(cyclical_col):
     """
@@ -195,9 +215,10 @@ def transform_columns(df, col_dict, drop_cols=True, drop_first=False):
     return df
 
 
-def get_clusters_gmm(df, column_1, column_2, title, xlabel, ylabel, n_cluster, n_init=20, init_params='kmeans',
+def get_clusters_gmm(X, title, xlabel, ylabel, n_cluster, n_init=20, init_params='kmeans',
                      random_state=7, plot_sizes=False, plot_boxes=False):
-    X = df[[column_1, column_2]]
+
+
     gmm = GaussianMixture(n_components=n_cluster, random_state=random_state, n_init=n_init,
                           init_params=init_params).fit(X)
     cluster = gmm.predict(X)
@@ -206,51 +227,43 @@ def get_clusters_gmm(df, column_1, column_2, title, xlabel, ylabel, n_cluster, n
     for k in range(n_cluster):
         X[f'cluster_{k}_prob'] = cluster_proba[:, k]
 
-    _plot_clusters_scatterplot(X, column_1, column_2, title, xlabel, ylabel)
+    if len(X.columns) == 4:
+        _plot_clusters_scatterplot(X, X.columns[0], X.columns[1], title, xlabel, ylabel)
+
+        if plot_boxes is True:
+            _plot_clusters_boxplot(X, X.columns[0], X.columns[1],)
+
+    else:
+        _plot_clusters_parallel_coordinates_plotly(X, title)
+
+    _plot_clusters_pairplot(X, title)
 
     if plot_sizes is True:
         _get_clusters_sizes(cluster)
-
-    if plot_boxes is True:
-        _plot_clusters_boxplot(X, column_1, column_2)
     # return X, gmm
 
 
-def get_clusters_kmeans(df, column_1, column_2, numerical_columns, title, xlabel, ylabel, n_cluster, random_state=7,
+def get_clusters_kmeans(X, title, xlabel, ylabel, n_cluster, random_state=7,
                         plot_sizes=False, plot_boxes=False):
-    X = df[[column_1, column_2]]
-
-    # scale numerical columns
-    # ct = ColumnTransformer([('Standard Scaler', StandardScaler(), numerical_columns)])
-    # X[numerical_columns] = ct.fit_transform(X)
 
     kmm = KMeans(n_clusters=n_cluster, init='k-means++', random_state=random_state).fit(X)
     cluster = kmm.predict(X)
     X['cluster'] = cluster
 
-    _plot_clusters_scatterplot(X, column_1, column_2, title, xlabel, ylabel)
+    if len(X.columns) == 3:
+        _plot_clusters_scatterplot(X, X.columns[0], X.columns[1], title, xlabel, ylabel)
+
+        if plot_boxes is True:
+            _plot_clusters_boxplot(X, X.columns[0], X.columns[1],)
+
+    else:
+        _plot_clusters_parallel_coordinates_plotly(X, title)
+
+    _plot_clusters_pairplot(X, title)
 
     if plot_sizes is True:
         _get_clusters_sizes(cluster)
 
-    if plot_boxes is True:
-        _plot_clusters_boxplot(X, column_1, column_2)
-    # return X, kmm
 
-def get_clusters_kmeans_md(X, title, xlabel, ylabel, n_cluster, random_state=7, plot_sizes=False, plot_boxes=False):
-    # scale numerical columns
-    # ct = ColumnTransformer([('Standard Scaler', StandardScaler(), numerical_columns)])
-    # X[numerical_columns] = ct.fit_transform(X)
+    return X
 
-    kmm = KMeans(n_clusters=n_cluster, init='k-means++', random_state=random_state).fit(X)
-    cluster = kmm.predict(X)
-    X['cluster'] = cluster
-
-    #_plot_clusters_scatterplot(X, column_1, X, title, xlabel, ylabel)
-    _plot_clusters_parallel_coordinates(X, title, xlabel, ylabel)
-    if plot_sizes is True:
-        _get_clusters_sizes(cluster)
-
-    if plot_boxes is True:
-        _plot_clusters_boxplot(X, column_1, X)
-    # return X, kmm

@@ -1,3 +1,8 @@
+import h3.api.numpy_int as h3
+import geopandas
+import numpy as np
+import geo_engineering
+
 def add_weekday(df):
     """
     This function adds weekdays (Sunday, Monday,..) to the data frame.
@@ -49,3 +54,81 @@ def add_time_interval(df):
         ((df["Trip End Hour"] >= 23) | (df["Trip End Hour"] < 5)),
         "Drop-off Time_Interval",
     ] = "night"
+
+
+
+def add_spatial_features(df, with_hex=False, hex_res=None):
+    """
+    This function adds the relevant spatial features for prediction.
+    ----------------------------------------------
+    :param
+        df(pandas.DataFrame): Given data frame
+    :return
+        geoPandas.GeoDataFrame: The merged geo data frame
+    """
+    gdf = geopandas.read_file("data/community_areas.geojson")
+    gdf["area_numbe"] = gdf["area_numbe"].astype(float).astype(int)
+    gdf["Community Area Center"] = gdf.geometry.centroid
+    gdf["Community Area Center Lat"] = gdf["Community Area Center"].y
+    gdf["Community Area Center Long"] = gdf["Community Area Center"].x
+
+    if with_hex:
+        gdf = geo_engineering._get_hexes(gdf)
+        gdf["hex_6_center"] = gdf.hex_6.apply(lambda hex: h3.h3_to_geo(hex))
+        gdf["hex_7_center"] = gdf.hex_7.apply(lambda hex: h3.h3_to_geo(hex))
+        gdf["hex_6_center_lat"] = [center_point[0] for center_point in gdf["hex_6_center"]]
+        gdf["hex_6_center_lon"] = [center_point[1] for center_point in gdf["hex_6_center"]]
+        gdf["hex_7_center_lat"] = [center_point[0] for center_point in gdf["hex_7_center"]]
+        gdf["hex_7_center_lon"] = [center_point[1] for center_point in gdf["hex_7_center"]]
+        _get_dist_features(df=gdf, lon=gdf[f"hex_{hex_res}_center_lon"],
+                           lat=gdf[f"hex_{hex_res}_center_lat"])
+        gdf = gdf[[f"hex_{hex_res}", "City Center Distance", "Airport Distance"]]
+        merged_df = df.merge(
+            gdf,
+            how="left",
+            left_on=f"hex_{hex_res}_pickup",
+            right_on=f"hex_{hex_res}",
+        )
+        merged_df.drop(columns=[f"hex_{hex_res}"], inplace=True)
+
+    else:
+        _get_dist_features(df=gdf, lon=gdf["Community Area Center Long"],
+                           lat=gdf["Community Area Center Lat"])
+        gdf = gdf[["area_numbe", "City Center Distance", "Airport Distance"]]
+        df["Pickup Community Area"] = df["Pickup Community Area"].astype(float).astype(int)
+        merged_df = df.merge(
+            gdf,
+            how="left",
+            validate="m:1",
+            left_on="Pickup Community Area",
+            right_on="area_numbe",
+        )
+        merged_df.drop(columns=["area_numbe"], inplace=True)
+        merged_df["Pickup Community Area"] = merged_df["Pickup Community Area"].astype(str)
+    return merged_df
+
+def _get_dist_features(df, lon, lat):
+    """
+    This function calculates the haversine distance of a point to Chicago city center and the air port.
+    ----------------------------------------------
+    :param
+       df ((geo)Pandas.DataFrame): The given data frame.
+       lon (float/np.array): The longitude.
+       lat (float/np.array): The latitude.
+    :return: (geo)Pandas.DataFrame: Data frame with the added features
+    """
+    center_lon = -87.623177
+    center_lat = 41.881832
+    airport_lon = -87.904724
+    airport_lat = 41.978611
+    center_lon, center_lat, lon, lat = map(np.radians, [center_lon, center_lat, lon, lat])
+    _ = np.sin((lat - center_lat) / 2.0) ** 2 + (
+            np.cos(center_lat) * np.cos(lat) * np.sin((lon - center_lon) / 2.0) ** 2
+    )
+    df["City Center Distance"] = 6371 * 2 * np.arcsin(np.sqrt(_))
+    airport_lon, airport_lat, lon, lat = map(np.radians, [airport_lon, airport_lat, lon, lat])
+    __ = np.sin((lat - airport_lat) / 2.0) ** 2 + (
+            np.cos(airport_lat) * np.cos(lat) * np.sin((lon - airport_lon) / 2.0) ** 2
+    )
+    df["Airport Distance"] = 6371 * 2 * np.arcsin(np.sqrt(__))
+    return df

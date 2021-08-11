@@ -1,6 +1,9 @@
 from sklearn import metrics
 import math
 import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
 
 
 def _smape(y_true, y_predicted):
@@ -36,3 +39,29 @@ def get_prediction_scores(y_true, y_predicted, s_mape=False):
     print(f"RMSE: {math.sqrt(metrics.mean_squared_error(y_true, y_predicted)): .3f}")
     print(f"R2: {100 * metrics.r2_score(y_true, y_predicted): .3f} %")
     print(f"Max Residual Error: {metrics.max_error(y_true, y_predicted): .3f}")
+
+
+def create_prediction_error_line_plt_nn(df, temporal_res, save_fig=True):
+    """
+    Doc String!
+    """
+    PLOT_CONST = {
+        "D": ["Day", "Daily"],
+        "6H": ["Time Zone", "6H"],
+        "H": ["Hour", "Hourly"],
+    }
+    if temporal_res == "H":
+        plt.figure(figsize=(30, 10))
+    else:
+        plt.figure(figsize=(15, 5))
+    comparison_plot_data = pd.DataFrame({'Actual': df.groupby(['Date'])[f'Demand ({temporal_res})'].mean(),
+                                         'Predictions': df.groupby(['Date'])[
+                                             f'Demand ({temporal_res}) Predictions'].mean(),
+                                         })
+    _ = sns.lineplot(data=comparison_plot_data, markers=True)
+    plt.title(f'Average Actual Demand per {PLOT_CONST.get(temporal_res)[0]} vs. Predicted Demand')
+    plt.xlabel('Date Time')
+    plt.ylabel(f'{PLOT_CONST.get(temporal_res)[1]} Demand')
+    plt.show()
+    if save_fig:
+        _.figure.savefig(f'img/{PLOT_CONST.get(temporal_res)[1]}_avg_pred_actual.png', bbox_inches='tight', dpi=1000)

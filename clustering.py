@@ -9,6 +9,7 @@ from sklearn.compose import ColumnTransformer
 import seaborn as sns
 from pandas.plotting import parallel_coordinates
 import plotly.express as px
+import math
 
 
 def get_silhouette_score(df, column_1, column_2, n_clusters, n_init=20, init_params='kmeans',
@@ -172,6 +173,22 @@ def _categorical_feature_transformer(df, categorical_col_names, drop_first=False
     df[categorical_col_names] = df[categorical_col_names].astype("str")
     return pd.get_dummies(df[categorical_col_names], drop_first=drop_first)
 
+def _numerical_feature_transformer(df, numerical_col_names):
+    """
+
+    ----------------------------------------------
+    :param
+        df (pandas.DataFrame): the given pandas data frame with numerical features
+        categorical_col_names (string[]): the name of the categorical features as a list
+        drop_first (bool): the decision to drop one category per feature
+    :returns
+        pandas.DataFrame: dummy-coded DataFrame
+    """
+    scaler = StandardScaler()
+    df[numerical_col_names] = scaler.fit_transform(df[numerical_col_names])
+    return df
+
+
 
 def transform_columns(df, col_dict, drop_cols=True, drop_first=False):
     """
@@ -207,6 +224,10 @@ def transform_columns(df, col_dict, drop_cols=True, drop_first=False):
             df, categorical_features, drop_first=drop_first
         )
         df = df.join(_)
+
+    numerical_features = col_dict.get("numerical_features")
+    if len(numerical_features) != 0:
+        df = _numerical_feature_transformer(df, numerical_features)
 
     if drop_cols:
         df.drop(cyclical_features, inplace=True, axis=1)

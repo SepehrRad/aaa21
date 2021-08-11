@@ -44,12 +44,8 @@ def split_data_sets_for_nn(df, temporal_resolution, test_size=0.2, validation_si
     start_index = len(df_train) - int(len(df_train) * validation_size)
     end_index = len(df_train)
 
-    # Test set
-    test_data = TabularPandas(df_test, cat_names=cat_vars, cont_names=cont_vars, y_names=target,
-                              procs=[Categorify, FillMissing, Normalize])
     val_index = df_train.iloc[start_index:end_index].index.values
     val_split = IndexSplitter(val_index)(range_of(df_train))
-    # val_split = RandomSplitter(valid_pct=validation_size, seed=7)(range_of(df_train))
 
     # Create train validation data
     train_val_data = TabularPandas(df_train, procs=[Categorify, FillMissing, Normalize],
@@ -63,7 +59,6 @@ def split_data_sets_for_nn(df, temporal_resolution, test_size=0.2, validation_si
     dls = train_val_data.dataloaders(batch_size=batch_size)
 
     # Test dl
-    # test_dl = TabDataLoader(test_data, bs=batch_size, shuffle=False, drop_last=False)
     test_dl = dls.test_dl(df_test, with_labels=True)
 
-    return dls, test_dl
+    return dls, test_dl, df_test

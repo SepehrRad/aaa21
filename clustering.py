@@ -1,24 +1,21 @@
 import numpy as np
 import pandas as pd
+import seaborn as sns
+
 from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
-from sklearn.compose import ColumnTransformer
-import seaborn as sns
-from pandas.plotting import parallel_coordinates
 import plotly.express as px
-from plotly.subplots import make_subplots
-import plotly.graph_objects as go
 import math
 
 
-def get_silhouette_score(df, column_1, column_2, n_clusters, n_init=20, init_params='kmeans',
-                         metric="euclidean", sample_size=1000, random_state=7):
-    s_score = []
-    df = df[[column_1, column_2]]
 
+
+def get_silhouette_score(df, n_clusters, n_init=20, init_params='kmeans',
+                         metric="euclidean", sample_size=1000, random_state=7, save_plot=False, save_name="silhouette"):
+    s_score = []
     clusters = range(2, n_clusters + 2)
 
     for cluster in clusters:
@@ -27,117 +24,100 @@ def get_silhouette_score(df, column_1, column_2, n_clusters, n_init=20, init_par
         s_score.append(silhouette_score(df, labels, metric=metric, sample_size=sample_size, random_state=random_state))
 
     # Plot the resulting Silhouette scores on a graph
-    plt.figure(figsize=(16, 8), dpi=300)
-    plt.plot(clusters, s_score, 'bo-', color='black')
-    plt.xlabel('n_clusters')
-    plt.ylabel('Silhouette Score')
-    plt.title('Identify the number of clusters using Silhouette Score')
-    plt.show()
+    with sns.axes_style("darkgrid"):
+        fig = plt.figure(figsize=(16, 8))
+        ax = sns.lineplot(x=clusters, y= s_score, palette="dark", marker="o")
+        ax.set_title('Identify the Number of Clusters using Silhouette Score', fontsize=16, fontweight='bold', pad=20)
+        ax.set(xlabel='Cluster', ylabel='BIC')
+        fig.tight_layout()
+
+    if save_plot:
+        ax.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
 
-def get_ellbow(df, n_clusters):
-    distortions = []
+def get_elbow(df, n_clusters, save_plot=False, save_name="elbow"):
+    inertia = []
     K = range(1, n_clusters + 2)
 
     for k in K:
         kmeansModel = KMeans(n_clusters=k, init='k-means++', random_state=7)
         kmeansModel.fit(df)
-        distortions.append(kmeansModel.inertia_)
+        inertia.append(kmeansModel.inertia_)
+    with sns.axes_style("darkgrid"):
+        fig = plt.figure(figsize=(16, 8))
+        ax = sns.lineplot(x=K, y=inertia, palette="dark", marker="o")
+        ax.set_title('Elbow Method Showing the Optimal Number of Clusters', fontsize=16, fontweight='bold', pad=20)
+        ax.set(xlabel='Cluster', ylabel='Inertia')
+        fig.tight_layout()
 
-    fig = plt.figure(figsize=(16, 8))
-    ax = sns.lineplot(x=K, y=distortions, color='C3')
-    ax.set_title('Elbow method showing the optimal k', fontsize=16, fontweight='bold', pad=20)
-    ax.set(xlabel='K', ylabel='Inertia')
-    fig.tight_layout()
+    if save_plot:
+        ax.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
+def get_bic(df, n_clusters, n_init=20, init_params='kmeans', save_plot=False, save_name="bic"):
 
-def get_bic(df, column_1, column_2, n_clusters, n_init=20, init_params='kmeans'):
     bic_score = []
-    df = df[[column_1, column_2]]
-
     clusters = range(2, n_clusters + 2)
 
     for cluster in clusters:
         model = GaussianMixture(n_components=cluster, n_init=n_init, init_params=init_params).fit(df)
         bic_score.append(model.bic(df))
+    with sns.axes_style("darkgrid"):
+        fig = plt.figure(figsize=(16, 8))
+        ax = sns.lineplot(x=clusters, y=bic_score, palette="dark", marker="o")
+        ax.set_title('Identify the Number of Clusters using BIC', fontsize=16, fontweight='bold', pad=20)
+        ax.set_xticks(clusters)
+        ax.set(xlabel='Cluster', ylabel='BIC')
+        fig.tight_layout()
 
-    # Plot the resulting Silhouette scores on a graph
-    plt.figure(figsize=(16, 8), dpi=300)
-    plt.plot(clusters, bic_score, 'bo-', color='blue')
-    plt.xlabel('n_clusters')
-    plt.ylabel('Score')
-    plt.legend()
-    plt.title('Identify the Number of Clusters using AIC and BIC')
-    plt.show()
+    if save_plot:
+        ax.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
-
-def _get_clusters_sizes(cluster):
+def _get_clusters_sizes(cluster, save_plot=False, save_name="sizes"):
     (unique, counts) = np.unique(cluster, return_counts=True)
     frequencies = np.asarray((unique, counts)).T
     frequencies = pd.DataFrame(data=frequencies, columns=["Cluster", "Count"])
 
     fig = plt.figure(figsize=(12, 12))
-    ax = sns.barplot(data=frequencies, x="Cluster", y="Count",
-                     palette=['green', 'blue', 'darkorchid', 'crimson', 'orange', 'darkturquoise'])
+    ax = sns.barplot(data=frequencies, x="Cluster", y="Count", palette="dark")
     ax.set_title("Cluster Size", fontsize=16, fontweight='bold', pad=20)
     ax.set_xlabel("Cluster")
     ax.set_ylabel("Size")
     fig.tight_layout()
 
+    if save_plot:
+        ax.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
-def _plot_clusters_boxplot(X, column_1, column_2, ):
+
+def _plot_clusters_boxplot(X, column_1, column_2, save_plot=False, save_name="box"):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
-    sns.boxplot(x="cluster", y=column_1, ax=ax1, data=X,
-                palette=['green', 'blue', 'darkorchid', 'crimson', 'orange', 'darkturquoise'])
+    sns.boxplot(x="cluster", y=column_1, ax=ax1, data=X, palette="dark")
     ax1.set_title(f'Cluster - Feature {column_1}', fontsize=16, fontweight='bold', pad=20)
     ax1.set_xlabel('Cluster')
     ax1.set_ylabel(column_1)
-    sns.boxplot(x="cluster", y=column_2, ax=ax2, data=X,
-                palette=['green', 'blue', 'darkorchid', 'crimson', 'orange', 'darkturquoise'])
+    sns.boxplot(x="cluster", y=column_2, ax=ax2, data=X, palette="dark")
     ax2.set_title(f'Cluster - Feature {column_2}', fontsize=16, fontweight='bold', pad=20)
     ax2.set_xlabel('Cluster')
     ax2.set_ylabel(column_2)
     fig.tight_layout()
 
+    if save_plot:
+        ax1.figure.savefig(f'img/{save_name}_1.png', bbox_inches='tight', dpi=1000)
+        ax2.figure.savefig(f'img/{save_name}_2.png', bbox_inches='tight', dpi=1000)
 
-def _plot_clusters_scatterplot(X, column_1, column_2, title, xlabel, ylabel, ):
+
+def _plot_clusters_scatterplot(X, column_1, column_2, title, xlabel, ylabel,save_plot=False, save_name="scatter"):
     fig = plt.figure(figsize=(9, 9))
-    ax = sns.scatterplot(data=X, x=column_1, y=column_2, hue='cluster', s=20, alpha=0.1,
-                         palette=['green', 'blue', 'darkorchid', 'crimson', 'orange', 'darkturquoise'])
+    ax = sns.scatterplot(data=X, x=column_1, y=column_2, hue='cluster', s=20, alpha=0.1, palette="dark")
     ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title='Cluster')
     ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     fig.tight_layout()
 
+    if save_plot:
+        ax.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
-def _plot_clusters_parallel_coordinates(X, title, xlabel, ylabel):
-    fig = plt.figure(figsize=(9, 9))
-    ax = parallel_coordinates(frame=X,
-                              class_column="cluster",
-                              color=['green', 'blue', 'darkorchid', 'crimson', 'orange', 'darkturquoise'],
-                              )
-    ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title='Cluster')
-    ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    fig.tight_layout()
-
-'''
-def _plot_clusters_parallel_coordinates_plotly(X, title):
-    n_cluster = X["cluster"].nunique()
-
-    for cluster in range(n_cluster):
-        fig = px.parallel_coordinates(X.loc[X["cluster"] == cluster],
-                                                    dimensions=X[X.columns.difference(["cluster"])],
-                                                    color="cluster",
-                                                    title=f"{title} - Cluster {cluster}",
-                                                    )
-
-        fig.show()
-'''
-
-def _plot_clusters_parallel_coordinates_plotly(df, title):
+def _plot_clusters_parallel_coordinates(df, title):
 
     X = df.groupby("cluster").sample(n=50, random_state=7)
 
@@ -151,17 +131,19 @@ def _plot_clusters_parallel_coordinates_plotly(df, title):
 
 
 
-def _plot_clusters_pairplot(X, title):
+def _plot_clusters_pairplot(X, title, save_plot, save_name):
     fig = plt.figure(figsize=(20, 20))
     ax = sns.pairplot(X,
                       hue="cluster",
                       corner=True,
-                      palette=['green', 'blue', 'darkorchid', 'crimson', 'orange', 'darkturquoise'],
-                      height=2.5,
+                      palette="dark",
+                      height=3.5,
                       aspect=2,
                       )
     ax.fig.suptitle(title, y=1.08)
     fig.tight_layout()
+    if save_plot:
+        ax.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
 
 def _cyclical_feature_transformer(cyclical_col):
@@ -261,49 +243,72 @@ def transform_columns(df, col_dict, drop_cols=True, drop_first=False):
 
 
 def get_clusters_gmm(X, title, xlabel, ylabel, n_cluster, n_init=20, init_params='kmeans',
-                     random_state=7, plot_sizes=False, plot_boxes=False):
+                     random_state=7, plot_sizes=False, plot_boxes=False, save_plots=False):
     gmm = GaussianMixture(n_components=n_cluster, random_state=random_state, n_init=n_init,
                           init_params=init_params).fit(X)
     cluster = gmm.predict(X)
     cluster_proba = gmm.predict_proba(X)
     X['cluster'] = cluster
-    for k in range(n_cluster):
-        X[f'cluster_{k}_prob'] = cluster_proba[:, k]
 
     if len(X.columns) == 4:
-        _plot_clusters_scatterplot(X, X.columns[0], X.columns[1], title, xlabel, ylabel)
+        _plot_clusters_scatterplot(X,
+                                   X.columns[0],
+                                   X.columns[1],
+                                   title,
+                                   xlabel,
+                                   ylabel,
+                                   save_plot=save_plots,
+                                   save_name=f"scatter_gmm_{X.columns[0]}_{X.columns[1]}")
 
         if plot_boxes is True:
-            _plot_clusters_boxplot(X, X.columns[0], X.columns[1], )
+            _plot_clusters_boxplot(X,
+                                   X.columns[0],
+                                   X.columns[1],
+                                   save_plot=save_plots,
+                                   save_name=f"boxplot_gmm_{X.columns[0]}_{X.columns[1]}")
 
     else:
-        _plot_clusters_parallel_coordinates_plotly(X, title)
+        _plot_clusters_parallel_coordinates(X, title)
 
-    _plot_clusters_pairplot(X, title)
+    _plot_clusters_pairplot(X, title,
+                            save_plot=save_plots,
+                            save_name=f"pairplot_gmm_{X.columns[0]}_{X.columns[-1]}")
 
     if plot_sizes is True:
-        _get_clusters_sizes(cluster)
-    # return X, gmm
+        _get_clusters_sizes(cluster, save_plot=save_plots,
+                            save_name=f"sizes_gmm_{X.columns[0]}_{X.columns[-1]}")
+
+    for k in range(n_cluster):
+        X[f'cluster_{k}_prob'] = cluster_proba[:, k]
+    return X
 
 
 def get_clusters_kmeans(X, title, xlabel, ylabel, n_cluster, random_state=7,
-                        plot_sizes=False, plot_boxes=False):
+                        plot_sizes=False, plot_boxes=False, save_plots=False):
     kmm = KMeans(n_clusters=n_cluster, init='k-means++', random_state=random_state).fit(X)
     cluster = kmm.predict(X)
     X['cluster'] = cluster
 
     if len(X.columns) == 3:
-        _plot_clusters_scatterplot(X, X.columns[0], X.columns[1], title, xlabel, ylabel)
+        _plot_clusters_scatterplot(X, X.columns[0], X.columns[1], title, xlabel, ylabel,
+                                   save_plot=save_plots,
+                                   save_name=f"scatter_kmeans_{X.columns[0]}_{X.columns[2]}")
 
         if plot_boxes is True:
-            _plot_clusters_boxplot(X, X.columns[0], X.columns[1], )
+            _plot_clusters_boxplot(X, X.columns[0], X.columns[1],
+                                   save_plot=save_plots,
+                                   save_name=f"boxplot_kmeans_{X.columns[0]}_{X.columns[1]}")
 
     else:
-        _plot_clusters_parallel_coordinates_plotly(X, title)
+        _plot_clusters_parallel_coordinates(X, title)
 
-    _plot_clusters_pairplot(X, title)
+    _plot_clusters_pairplot(X, title,
+                            save_plot=save_plots,
+                            save_name=f"pairplot_kmeans_{X.columns[0]}_{X.columns[-1]}")
 
     if plot_sizes is True:
-        _get_clusters_sizes(cluster)
+        _get_clusters_sizes(cluster,
+                            save_plot=save_plots,
+                            save_name=f"sizes_kmeans_{X.columns[0]}_{X.columns[-1]}")
 
     return X

@@ -105,13 +105,13 @@ def _plot_clusters_boxplot(X, column_1, column_2, save_plot=False, save_name="bo
         ax2.figure.savefig(f'img/{save_name}_2.png', bbox_inches='tight', dpi=1000)
 
 
-def _plot_clusters_scatterplot(X, column_1, column_2, title, xlabel, ylabel,save_plot=False, save_name="scatter"):
+def _plot_clusters_scatterplot(X, column_1, column_2, title, save_plot=False, save_name="scatter"):
     fig = plt.figure(figsize=(9, 9))
     ax = sns.scatterplot(data=X, x=column_1, y=column_2, hue='cluster', s=20, alpha=0.1, palette="dark")
     ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title='Cluster')
     ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
+    ax.set_xlabel(column_1)
+    ax.set_ylabel(column_2)
     fig.tight_layout()
 
     if save_plot:
@@ -242,7 +242,7 @@ def transform_columns(df, col_dict, drop_cols=True, drop_first=False):
     return df
 
 
-def get_clusters_gmm(X, title, xlabel, ylabel, n_cluster, n_init=20, init_params='kmeans',
+def get_clusters_gmm(X, title, n_cluster, n_init=20, init_params='kmeans',
                      random_state=7, plot_sizes=False, plot_boxes=False, save_plots=False):
     gmm = GaussianMixture(n_components=n_cluster, random_state=random_state, n_init=n_init,
                           init_params=init_params).fit(X)
@@ -250,13 +250,11 @@ def get_clusters_gmm(X, title, xlabel, ylabel, n_cluster, n_init=20, init_params
     cluster_proba = gmm.predict_proba(X)
     X['cluster'] = cluster
 
-    if len(X.columns) == 4:
+    if len(X.columns) == 3:
         _plot_clusters_scatterplot(X,
                                    X.columns[0],
                                    X.columns[1],
                                    title,
-                                   xlabel,
-                                   ylabel,
                                    save_plot=save_plots,
                                    save_name=f"scatter_gmm_{X.columns[0]}_{X.columns[1]}")
 
@@ -283,14 +281,14 @@ def get_clusters_gmm(X, title, xlabel, ylabel, n_cluster, n_init=20, init_params
     return X
 
 
-def get_clusters_kmeans(X, title, xlabel, ylabel, n_cluster, random_state=7,
+def get_clusters_kmeans(X, title, n_cluster, random_state=7,
                         plot_sizes=False, plot_boxes=False, save_plots=False):
     kmm = KMeans(n_clusters=n_cluster, init='k-means++', random_state=random_state).fit(X)
     cluster = kmm.predict(X)
     X['cluster'] = cluster
 
     if len(X.columns) == 3:
-        _plot_clusters_scatterplot(X, X.columns[0], X.columns[1], title, xlabel, ylabel,
+        _plot_clusters_scatterplot(X, X.columns[0], X.columns[1], title,
                                    save_plot=save_plots,
                                    save_name=f"scatter_kmeans_{X.columns[0]}_{X.columns[2]}")
 

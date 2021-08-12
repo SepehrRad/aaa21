@@ -1,4 +1,5 @@
 import re
+
 from fastai.tabular.all import *
 
 
@@ -6,22 +7,22 @@ def _preprocess_data_for_nn(df, temporal_resolution):
     """
     @Deprecated
     """
-    if temporal_resolution == 'D':
-        df = add_datepart(df, 'Trip Start Timestamp', prefix='')
+    if temporal_resolution == "D":
+        df = add_datepart(df, "Trip Start Timestamp", prefix="")
     else:
-        df = add_datepart(df, 'Trip Start Timestamp', prefix='', time=True)
-        _ = [c for c in df.columns if ('minute' in c.lower() or 'second' in c.lower())]
+        df = add_datepart(df, "Trip Start Timestamp", prefix="", time=True)
+        _ = [c for c in df.columns if ("minute" in c.lower() or "second" in c.lower())]
         df.drop(_, axis=1, inplace=True)
-    df = df.astype({'Week': 'uint32'})
-    df = df.astype({'Elapsed': 'int64'})
+    df = df.astype({"Week": "uint32"})
+    df = df.astype({"Elapsed": "int64"})
     # Only Columns with more than 35 distinct values will be considered as continuous
     target = f"Demand ({temporal_resolution})"
     cont_vars, cat_vars = cont_cat_split(df, max_card=35, dep_var=target)
     # Spacial temporal columns that should be considered as categories in an embedding structure
-    cont_vars.remove('Dayofyear')
-    cat_vars.append('Dayofyear')
-    cont_vars.remove('Week')
-    cat_vars.append('Week')
+    cont_vars.remove("Dayofyear")
+    cat_vars.append("Dayofyear")
+    cont_vars.remove("Week")
+    cat_vars.append("Week")
     hex_regex = re.compile(".*hex")
     _ = list(filter(hex_regex.match, cont_vars))
     if bool(_):
@@ -30,7 +31,9 @@ def _preprocess_data_for_nn(df, temporal_resolution):
     return df, target, cont_vars, cat_vars
 
 
-def split_data_sets_for_nn(df, temporal_resolution, test_size=0.2, validation_size=0.2, batch_size=32):
+def split_data_sets_for_nn(
+    df, temporal_resolution, test_size=0.2, validation_size=0.2, batch_size=32
+):
     """
     This function splits a data set into three data loaders, namely train,test, and validation
     ----------------------------------------------
@@ -45,7 +48,9 @@ def split_data_sets_for_nn(df, temporal_resolution, test_size=0.2, validation_si
         DataLoader: the test data loader
         pandas.DataFrame: the test data frame
     """
-    data, target, cont_vars, cat_vars = _preprocess_data_for_nn(df=df, temporal_resolution=temporal_resolution)
+    data, target, cont_vars, cat_vars = _preprocess_data_for_nn(
+        df=df, temporal_resolution=temporal_resolution
+    )
     train_index = int(len(data) * (1 - test_size))
     df_train = data[0:train_index]
     df_test = data[train_index:]
@@ -58,12 +63,15 @@ def split_data_sets_for_nn(df, temporal_resolution, test_size=0.2, validation_si
     val_split = IndexSplitter(val_index)(range_of(df_train))
 
     # Create train validation data
-    train_val_data = TabularPandas(df_train, procs=[Categorify, FillMissing, Normalize],
-                                   cat_names=cat_vars,
-                                   cont_names=cont_vars,
-                                   y_names=target,
-                                   y_block=RegressionBlock(n_out=1),
-                                   splits=val_split)
+    train_val_data = TabularPandas(
+        df_train,
+        procs=[Categorify, FillMissing, Normalize],
+        cat_names=cat_vars,
+        cont_names=cont_vars,
+        y_names=target,
+        y_block=RegressionBlock(n_out=1),
+        splits=val_split,
+    )
 
     # Creating the final data loaders
     dls = train_val_data.dataloaders(batch_size=batch_size)

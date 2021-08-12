@@ -1,8 +1,9 @@
-import h3.api.numpy_int as h3
 import geopandas
+import h3.api.numpy_int as h3
 import numpy as np
-import geo_engineering
 from pandas.tseries.holiday import USFederalHolidayCalendar as calendar
+
+import geo_engineering
 
 
 def add_weekday(df):
@@ -68,9 +69,11 @@ def add_holidays(df):
         pandas.DataFrame: The given data frame with the holiday information.
     """
     cal = calendar()
-    holidays = cal.holidays(df['Trip Start Timestamp'].min(), df['Trip Start Timestamp'].max())
+    holidays = cal.holidays(
+        df["Trip Start Timestamp"].min(), df["Trip Start Timestamp"].max()
+    )
     df["Holiday"] = (
-        df['Trip Start Timestamp'].dt.date.astype("datetime64").isin(holidays)
+        df["Trip Start Timestamp"].dt.date.astype("datetime64").isin(holidays)
     )
     return df
 
@@ -94,12 +97,23 @@ def add_spatial_features(df, with_hex=False, hex_res=None):
         gdf = geo_engineering._get_hexes(gdf)
         gdf["hex_6_center"] = gdf.hex_6.apply(lambda hex: h3.h3_to_geo(hex))
         gdf["hex_7_center"] = gdf.hex_7.apply(lambda hex: h3.h3_to_geo(hex))
-        gdf["hex_6_center_lat"] = [center_point[0] for center_point in gdf["hex_6_center"]]
-        gdf["hex_6_center_lon"] = [center_point[1] for center_point in gdf["hex_6_center"]]
-        gdf["hex_7_center_lat"] = [center_point[0] for center_point in gdf["hex_7_center"]]
-        gdf["hex_7_center_lon"] = [center_point[1] for center_point in gdf["hex_7_center"]]
-        _get_dist_features(df=gdf, lon=gdf[f"hex_{hex_res}_center_lon"],
-                           lat=gdf[f"hex_{hex_res}_center_lat"])
+        gdf["hex_6_center_lat"] = [
+            center_point[0] for center_point in gdf["hex_6_center"]
+        ]
+        gdf["hex_6_center_lon"] = [
+            center_point[1] for center_point in gdf["hex_6_center"]
+        ]
+        gdf["hex_7_center_lat"] = [
+            center_point[0] for center_point in gdf["hex_7_center"]
+        ]
+        gdf["hex_7_center_lon"] = [
+            center_point[1] for center_point in gdf["hex_7_center"]
+        ]
+        _get_dist_features(
+            df=gdf,
+            lon=gdf[f"hex_{hex_res}_center_lon"],
+            lat=gdf[f"hex_{hex_res}_center_lat"],
+        )
         gdf = gdf[[f"hex_{hex_res}", "City Center Distance", "Airport Distance"]]
         merged_df = df.merge(
             gdf,
@@ -110,10 +124,15 @@ def add_spatial_features(df, with_hex=False, hex_res=None):
         merged_df.drop(columns=[f"hex_{hex_res}"], inplace=True)
 
     else:
-        _get_dist_features(df=gdf, lon=gdf["Community Area Center Long"],
-                           lat=gdf["Community Area Center Lat"])
+        _get_dist_features(
+            df=gdf,
+            lon=gdf["Community Area Center Long"],
+            lat=gdf["Community Area Center Lat"],
+        )
         gdf = gdf[["area_numbe", "City Center Distance", "Airport Distance"]]
-        df["Pickup Community Area"] = df["Pickup Community Area"].astype(float).astype(int)
+        df["Pickup Community Area"] = (
+            df["Pickup Community Area"].astype(float).astype(int)
+        )
         merged_df = df.merge(
             gdf,
             how="left",
@@ -122,7 +141,9 @@ def add_spatial_features(df, with_hex=False, hex_res=None):
             right_on="area_numbe",
         )
         merged_df.drop(columns=["area_numbe"], inplace=True)
-        merged_df["Pickup Community Area"] = merged_df["Pickup Community Area"].astype(str)
+        merged_df["Pickup Community Area"] = merged_df["Pickup Community Area"].astype(
+            str
+        )
     return merged_df
 
 
@@ -140,14 +161,18 @@ def _get_dist_features(df, lon, lat):
     center_lat = 41.881832
     airport_lon = -87.904724
     airport_lat = 41.978611
-    center_lon, center_lat, lon_c, lat_c = map(np.radians, [center_lon, center_lat, lon, lat])
+    center_lon, center_lat, lon_c, lat_c = map(
+        np.radians, [center_lon, center_lat, lon, lat]
+    )
     _ = np.sin((lat_c - center_lat) / 2.0) ** 2 + (
-            np.cos(center_lat) * np.cos(lat_c) * np.sin((lon_c - center_lon) / 2.0) ** 2
+        np.cos(center_lat) * np.cos(lat_c) * np.sin((lon_c - center_lon) / 2.0) ** 2
     )
     df["City Center Distance"] = 6371 * 2 * np.arcsin(np.sqrt(_))
-    airport_lon, airport_lat, lon_a, lat_a = map(np.radians, [airport_lon, airport_lat, lon, lat])
+    airport_lon, airport_lat, lon_a, lat_a = map(
+        np.radians, [airport_lon, airport_lat, lon, lat]
+    )
     __ = np.sin((lat_a - airport_lat) / 2.0) ** 2 + (
-            np.cos(airport_lat) * np.cos(lat_a) * np.sin((lon_a - airport_lon) / 2.0) ** 2
+        np.cos(airport_lat) * np.cos(lat_a) * np.sin((lon_a - airport_lon) / 2.0) ** 2
     )
     df["Airport Distance"] = 6371 * 2 * np.arcsin(np.sqrt(__))
     return df

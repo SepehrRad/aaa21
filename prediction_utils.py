@@ -1,9 +1,10 @@
-from sklearn import metrics
 import math
-import numpy as np
-import seaborn as sns
+
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import seaborn as sns
+from sklearn import metrics
 
 
 def _smape(y_true, y_predicted):
@@ -18,8 +19,13 @@ def _smape(y_true, y_predicted):
     """
     y_true = np.array([i for i in y_true])
     y_predicted = np.array([i for i in y_predicted])
-    sMape = (100 / len(y_true) * np.sum(2 * np.abs(y_predicted - y_true) /
-                                        (np.abs(y_true) + np.abs(y_predicted))))[0]
+    sMape = (
+        100
+        / len(y_true)
+        * np.sum(
+            2 * np.abs(y_predicted - y_true) / (np.abs(y_true) + np.abs(y_predicted))
+        )
+    )[0]
     return float(sMape)
 
 
@@ -32,8 +38,11 @@ def get_prediction_scores(y_true, y_predicted, s_mape=False):
         y_true (List): Predicted values
     """
     print("-------MODEL SCORES-------")
-    print(f"MAPE: {100 * metrics.mean_absolute_percentage_error(y_true, y_predicted): .3f} %")
-    if s_mape: print(f"sMAPE: {_smape(y_true, y_predicted): .3f} %")
+    print(
+        f"MAPE: {100 * metrics.mean_absolute_percentage_error(y_true, y_predicted): .3f} %"
+    )
+    if s_mape:
+        print(f"sMAPE: {_smape(y_true, y_predicted): .3f} %")
     print(f"MAE: {metrics.mean_absolute_error(y_true, y_predicted): .3f}")
     print(f"MSE: {metrics.mean_squared_error(y_true, y_predicted): .3f}")
     print(f"RMSE: {math.sqrt(metrics.mean_squared_error(y_true, y_predicted)): .3f}")
@@ -60,14 +69,24 @@ def create_prediction_error_line_plt_nn(df, temporal_res, save_fig=True):
         plt.figure(figsize=(30, 10))
     else:
         plt.figure(figsize=(15, 5))
-    comparison_plot_data = pd.DataFrame({'Actual': df.groupby(['Date'])[f'Demand ({temporal_res})'].mean(),
-                                         'Predictions': df.groupby(['Date'])[
-                                             f'Demand ({temporal_res}) Predictions'].mean(),
-                                         })
+    comparison_plot_data = pd.DataFrame(
+        {
+            "Actual": df.groupby(["Date"])[f"Demand ({temporal_res})"].mean(),
+            "Predictions": df.groupby(["Date"])[
+                f"Demand ({temporal_res}) Predictions"
+            ].mean(),
+        }
+    )
     _ = sns.lineplot(data=comparison_plot_data, markers=True)
-    plt.title(f'Average Actual Demand per {PLOT_CONST.get(temporal_res)[0]} vs. Predicted Demand')
-    plt.xlabel('Date Time')
-    plt.ylabel(f'{PLOT_CONST.get(temporal_res)[1]} Demand')
+    plt.title(
+        f"Average Actual Demand per {PLOT_CONST.get(temporal_res)[0]} vs. Predicted Demand"
+    )
+    plt.xlabel("Date Time")
+    plt.ylabel(f"{PLOT_CONST.get(temporal_res)[1]} Demand")
     plt.show()
     if save_fig:
-        _.figure.savefig(f'img/{PLOT_CONST.get(temporal_res)[1]}_avg_pred_actual.png', bbox_inches='tight', dpi=1000)
+        _.figure.savefig(
+            f"img/{PLOT_CONST.get(temporal_res)[1]}_avg_pred_actual.png",
+            bbox_inches="tight",
+            dpi=1000,
+        )

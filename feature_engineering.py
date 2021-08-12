@@ -140,14 +140,14 @@ def _get_dist_features(df, lon, lat):
     center_lat = 41.881832
     airport_lon = -87.904724
     airport_lat = 41.978611
-    center_lon, center_lat, lon, lat = map(np.radians, [center_lon, center_lat, lon, lat])
-    _ = np.sin((lat - center_lat) / 2.0) ** 2 + (
-            np.cos(center_lat) * np.cos(lat) * np.sin((lon - center_lon) / 2.0) ** 2
+    center_lon, center_lat, lon_c, lat_c = map(np.radians, [center_lon, center_lat, lon, lat])
+    _ = np.sin((lat_c - center_lat) / 2.0) ** 2 + (
+            np.cos(center_lat) * np.cos(lat_c) * np.sin((lon_c - center_lon) / 2.0) ** 2
     )
     df["City Center Distance"] = 6371 * 2 * np.arcsin(np.sqrt(_))
-    airport_lon, airport_lat, lon, lat = map(np.radians, [airport_lon, airport_lat, lon, lat])
-    __ = np.sin((lat - airport_lat) / 2.0) ** 2 + (
-            np.cos(airport_lat) * np.cos(lat) * np.sin((lon - airport_lon) / 2.0) ** 2
+    airport_lon, airport_lat, lon_a, lat_a = map(np.radians, [airport_lon, airport_lat, lon, lat])
+    __ = np.sin((lat_a - airport_lat) / 2.0) ** 2 + (
+            np.cos(airport_lat) * np.cos(lat_a) * np.sin((lon_a - airport_lon) / 2.0) ** 2
     )
     df["Airport Distance"] = 6371 * 2 * np.arcsin(np.sqrt(__))
     return df

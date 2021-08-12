@@ -43,7 +43,13 @@ def get_prediction_scores(y_true, y_predicted, s_mape=False):
 
 def create_prediction_error_line_plt_nn(df, temporal_res, save_fig=True):
     """
-    Doc String!
+    This function plots the average prediction vs. actual demand in different temporal resolution.
+    Furthermore, the function saves the result upon request as a png image.
+    ----------------------------------------------
+    :param
+        df (pandas.DataFrame): The given data set
+        temporal_resolution (String): the target temporal resolution
+        save_fig (boolean): whether to save the image or not
     """
     PLOT_CONST = {
         "D": ["Day", "Daily"],

@@ -1,10 +1,11 @@
-from sklearn import metrics
 from fastai.tabular.all import *
 import math
-import numpy as np
-import seaborn as sns
+
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import seaborn as sns
+from sklearn import metrics
 
 
 def _smape(y_true, y_predicted, prediction_type):
@@ -50,7 +51,13 @@ def get_prediction_scores(y_true, y_predicted, s_mape=False, prediction_type='nn
 
 def create_prediction_error_line_plt_nn(df, temporal_res, save_fig=True):
     """
-    Doc String!
+    This function plots the average prediction vs. actual demand in different temporal resolution.
+    Furthermore, the function saves the result upon request as a png image.
+    ----------------------------------------------
+    :param
+        df (pandas.DataFrame): The given data set
+        temporal_resolution (String): the target temporal resolution
+        save_fig (boolean): whether to save the image or not
     """
     PLOT_CONST = {
         "D": ["Day", "Daily"],
@@ -61,17 +68,27 @@ def create_prediction_error_line_plt_nn(df, temporal_res, save_fig=True):
         plt.figure(figsize=(30, 10))
     else:
         plt.figure(figsize=(15, 5))
-    comparison_plot_data = pd.DataFrame({'Actual': df.groupby(['Date'])[f'Demand ({temporal_res})'].mean(),
-                                         'Predictions': df.groupby(['Date'])[
-                                             f'Demand ({temporal_res}) Predictions'].mean(),
-                                         })
+    comparison_plot_data = pd.DataFrame(
+        {
+            "Actual": df.groupby(["Date"])[f"Demand ({temporal_res})"].mean(),
+            "Predictions": df.groupby(["Date"])[
+                f"Demand ({temporal_res}) Predictions"
+            ].mean(),
+        }
+    )
     _ = sns.lineplot(data=comparison_plot_data, markers=True)
-    plt.title(f'Average Actual Demand per {PLOT_CONST.get(temporal_res)[0]} vs. Predicted Demand')
-    plt.xlabel('Date Time')
-    plt.ylabel(f'{PLOT_CONST.get(temporal_res)[1]} Demand')
+    plt.title(
+        f"Average Actual Demand per {PLOT_CONST.get(temporal_res)[0]} vs. Predicted Demand"
+    )
+    plt.xlabel("Date Time")
+    plt.ylabel(f"{PLOT_CONST.get(temporal_res)[1]} Demand")
     plt.show()
     if save_fig:
-        _.figure.savefig(f'img/{PLOT_CONST.get(temporal_res)[1]}_avg_pred_actual.png', bbox_inches='tight', dpi=1000)
+        _.figure.savefig(
+            f"img/{PLOT_CONST.get(temporal_res)[1]}_avg_pred_actual.png",
+            bbox_inches="tight",
+            dpi=1000,
+        )
 
 
 def preprocess_data_for_prediction(df, temporal_resolution):

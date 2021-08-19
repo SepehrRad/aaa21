@@ -11,8 +11,6 @@ import plotly.express as px
 import math
 
 
-
-
 def get_silhouette_score(df, n_clusters, n_init=20, init_params='kmeans',
                          metric="euclidean", sample_size=1000, random_state=7, save_plot=False, save_name="silhouette"):
     s_score = []
@@ -26,7 +24,7 @@ def get_silhouette_score(df, n_clusters, n_init=20, init_params='kmeans',
     # Plot the resulting Silhouette scores on a graph
     with sns.axes_style("darkgrid"):
         fig = plt.figure(figsize=(16, 8))
-        ax = sns.lineplot(x=clusters, y= s_score, palette="dark", marker="o")
+        ax = sns.lineplot(x=clusters, y=s_score, palette="dark", marker="o")
         ax.set_title('Identify the Number of Clusters using Silhouette Score', fontsize=16, fontweight='bold', pad=20)
         ax.set(xlabel='Cluster', ylabel='BIC')
         fig.tight_layout()
@@ -53,8 +51,8 @@ def get_elbow(df, n_clusters, save_plot=False, save_name="elbow"):
     if save_plot:
         ax.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
-def get_bic(df, n_clusters, n_init=20, init_params='kmeans', save_plot=False, save_name="bic"):
 
+def get_bic(df, n_clusters, n_init=20, init_params='kmeans', save_plot=False, save_name="bic"):
     bic_score = []
     clusters = range(2, n_clusters + 2)
 
@@ -72,8 +70,8 @@ def get_bic(df, n_clusters, n_init=20, init_params='kmeans', save_plot=False, sa
     if save_plot:
         ax.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
-def plot_clusters_sizes(X, title, save_plot=False, save_name="sizes"):
 
+def plot_clusters_sizes(X, title, save_plot=False, save_name="sizes"):
     fig = plt.figure(figsize=(12, 12))
     ax = sns.countplot(x="cluster", data=X, palette="dark")
     ax.set_title(title, fontsize=16, fontweight='bold', pad=20)

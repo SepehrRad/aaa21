@@ -1,18 +1,42 @@
 import numpy as np
 import pandas as pd
 import seaborn as sns
+import math
 
 from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
-import plotly.express as px
-import math
 
 
-def get_silhouette_score(df, n_clusters, n_init=20, init_params='kmeans',
-                         metric="euclidean", sample_size=1000, random_state=7, save_plot=False, save_name="silhouette"):
+def get_silhouette_score(df,
+                         n_clusters,
+                         n_init=20,
+                         init_params='kmeans',
+                         metric="euclidean",
+                         sample_size=1000,
+                         random_state=7,
+                         save_plot=False,
+                         save_name="silhouette"):
+    """
+    This function calculates the silhouette score for n clusters with GMMand plots the result as line chart.
+    ----------------------------------------------
+    :param
+        df (pandas.DataFrame): The given pandas data frame with features to use for clustering.
+        n_clusters (int): Number of clusters.
+        n_init (int): The number of initializations to perform. The best results are kept.
+        init_params (string): Method used to initialize the weights, the means and the precision. Must be "kmeans" or
+        "random".
+        metric (string): Metirc to calculate the distance between instances in a feature array.
+        sample_size (int): Sample size to use for computing the Silhouette Coefficent on a random subset.
+        random_state (int): Random state to use.
+        save_plot (bool): Saves the plot as png in wd/img.
+        save_name (string): Name of file.
+    :returns
+        None
+    """
+
     s_score = []
     clusters = range(2, n_clusters + 2)
 
@@ -30,10 +54,22 @@ def get_silhouette_score(df, n_clusters, n_init=20, init_params='kmeans',
         fig.tight_layout()
 
     if save_plot:
-        ax.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
 
 def get_elbow(df, n_clusters, save_plot=False, save_name="elbow"):
+    """
+    This function calculates the distortion score for n_cluster and plots the result as line chart (
+    also known as elbow method).
+    ----------------------------------------------
+    :param
+        df (pandas.DataFrame): The given pandas data frame with features to use for clustering.
+        n_clusters (int): Number of clusters.
+        save_plot (bool): Saves the plot as png in wd/img.
+        save_name (string): Name of file.
+    :returns
+        None
+    """
     inertia = []
     K = range(1, n_clusters + 2)
 
@@ -49,10 +85,29 @@ def get_elbow(df, n_clusters, save_plot=False, save_name="elbow"):
         fig.tight_layout()
 
     if save_plot:
-        ax.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
 
-def get_bic(df, n_clusters, n_init=20, init_params='kmeans', save_plot=False, save_name="bic"):
+def get_bic(df,
+            n_clusters,
+            n_init=20,
+            init_params='kmeans',
+            save_plot=False,
+            save_name="bic"):
+    """
+    This function calculates the BIC for n clusters with GMM and plots the result as line chart.
+    ----------------------------------------------
+    :param
+        df (pandas.DataFrame): The given pandas data frame with features to use for clustering.
+        n_clusters (int): Number of clusters.
+        n_init (int): The number of initializations to perform. The best results are kept.
+        init_params (string): Method used to initialize the weights, the means and the precision. Must be "kmeans" or
+        "random".
+        save_plot (bool): Saves the plot as png in wd/img.
+        save_name (string): Name of file.
+    :returns
+        None
+    """
     bic_score = []
     clusters = range(2, n_clusters + 2)
 
@@ -68,10 +123,21 @@ def get_bic(df, n_clusters, n_init=20, init_params='kmeans', save_plot=False, sa
         fig.tight_layout()
 
     if save_plot:
-        ax.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
 
 def plot_clusters_sizes(X, title, save_plot=False, save_name="sizes"):
+    """
+    This function plots the size of each cluster in a bar plot.
+    ----------------------------------------------
+    :param
+        X (pandas.DataFrame): The given pandas data frame including a column "cluster".
+        title (string): Title of the plot.
+        save_plot (bool): Saves the plot as png in wd/img.
+        save_name (string): Name of file.
+    :returns
+        None
+    """
     fig = plt.figure(figsize=(12, 12))
     ax = sns.countplot(x="cluster", data=X, palette="dark")
     ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
@@ -80,10 +146,22 @@ def plot_clusters_sizes(X, title, save_plot=False, save_name="sizes"):
     fig.tight_layout()
 
     if save_plot:
-        ax.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
 
 def plot_clusters_boxplot(X, column_1, column_2, save_plot=False, save_name="box"):
+    """
+    This function plots the distribution of two features in regards to the clusters as box plots.
+    ----------------------------------------------
+    :param
+        X (pandas.DataFrame): The given pandas data frame including a column "cluster".
+        column_1: First feature of DataFrame X to be used for the plot.
+        column_2: Second feature of DataFrame X to be used for the plot.
+        save_plot (bool): Saves the plot as png in wd/img.
+        save_name (string): Name of file.
+    :returns
+        None
+    """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
     sns.boxplot(x="cluster", y=column_1, ax=ax1, data=X, palette="dark")
     ax1.set_title(f'Cluster - Feature {column_1}', fontsize=16, fontweight='bold', pad=20)
@@ -96,11 +174,23 @@ def plot_clusters_boxplot(X, column_1, column_2, save_plot=False, save_name="box
     fig.tight_layout()
 
     if save_plot:
-        ax1.figure.savefig(f'img/{save_name}_1.png', bbox_inches='tight', dpi=1000)
-        ax2.figure.savefig(f'img/{save_name}_2.png', bbox_inches='tight', dpi=1000)
+        fig.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
 
 def plot_clusters_scatter(X, column_1, column_2, title, save_plot=False, save_name="scatter"):
+    """
+    This function plots two features in regards to the clusters as scatterplot.
+    ----------------------------------------------
+    :param
+        X (pandas.DataFrame): The given pandas data frame including a column "cluster".
+        column_1: First feature of DataFrame X to be used for the plot as x-axis.
+        column_2: Second feature of DataFrame X to be used for the plot as y-axis.
+        title (string): Title of the plot.
+        save_plot (bool): Saves the plot as png in wd/img.
+        save_name (string): Name of file.
+    :returns
+        None
+    """
     fig = plt.figure(figsize=(9, 9))
     ax = sns.scatterplot(data=X, x=column_1, y=column_2, hue='cluster', s=20, alpha=0.1, palette="dark")
     ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title='Cluster')
@@ -110,10 +200,21 @@ def plot_clusters_scatter(X, column_1, column_2, title, save_plot=False, save_na
     fig.tight_layout()
 
     if save_plot:
-        ax.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
 
-def plot_clusters_pairplot(X, title, save_plot, save_name):
+def plot_clusters_pairplot(X, title, save_plot=False, save_name="pair"):
+    """
+    This function plots a pair plot of all features in a DataFrame.
+    ----------------------------------------------
+    :param
+        X (pandas.DataFrame): The given pandas data frame including a column "cluster".
+        title (string): Title of the plot.
+        save_plot (bool): Saves the plot as png in wd/img.
+        save_name (string): Name of file.
+    :returns
+        None
+    """
     fig = plt.figure(figsize=(20, 20))
     ax = sns.pairplot(X,
                       hue="cluster",
@@ -125,7 +226,7 @@ def plot_clusters_pairplot(X, title, save_plot, save_name):
     ax.fig.suptitle(title, y=1.08)
     fig.tight_layout()
     if save_plot:
-        ax.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
 
 def _cyclical_feature_transformer(cyclical_col):
@@ -224,8 +325,22 @@ def transform_columns(df, col_dict, drop_cols=True, drop_first=False):
     return df
 
 
-def get_clusters_gmm(X, n_cluster, n_init=20, init_params='kmeans',
-                     random_state=7):
+def get_clusters_gmm(X, n_cluster, n_init=20, init_params='kmeans', random_state=7):
+    """
+    This function creates a Gaussian Mixture Model and returns a DataFrame with a prediction for the cluster of each
+    data sample.
+    ----------------------------------------------
+    :param
+        X (pandas.DataFrame): The given pandas data frame with features to use for clustering.
+        n_clusters (int): Number of clusters.
+        n_init (int): The number of initializations to perform. The best results are kept.
+        init_params (string): Method used to initialize the weights, the means and the precision. Must be "kmeans" or
+        "random".
+        random_state (int): Random state to use.
+    :returns
+        pandas.DataFrame: DataFrame with information with a prediction for the cluster of each data sample.
+    """
+
     gmm = GaussianMixture(n_components=n_cluster, random_state=random_state, n_init=n_init,
                           init_params=init_params).fit(X)
     cluster = gmm.predict(X)
@@ -237,6 +352,17 @@ def get_clusters_gmm(X, n_cluster, n_init=20, init_params='kmeans',
 
 
 def get_clusters_kmeans(X, n_cluster, random_state=7):
+    """
+    This function creates a kmeans++ and returns a DataFrame with a prediction for the cluster of each
+    data sample.
+    ----------------------------------------------
+    :param
+        X (pandas.DataFrame): The given pandas data frame with features to use for clustering.
+        n_clusters (int): Number of clusters.
+        random_state (int): Random state to use.
+    :returns
+        pandas.DataFrame: DataFrame with information with a prediction for the cluster of each data sample.
+    """
     kmm = KMeans(n_clusters=n_cluster, init='k-means++', random_state=random_state).fit(X)
     cluster = kmm.predict(X)
     X['cluster'] = cluster

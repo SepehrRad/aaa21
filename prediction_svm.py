@@ -1,7 +1,7 @@
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import TimeSeriesSplit, GridSearchCV
+from sklearn.model_selection import TimeSeriesSplit, RandomizedSearchCV
 
 
 def split_data_sets_for_svm(df, test_size=0.2):
@@ -35,26 +35,29 @@ def make_pipeline_for_svm(cat_vars, cont_vars, model):
 
 
 def find_best_parameters_for_model(
-    pipeline, X_train, y_train, model_params, scoring, verbose=True):
+    pipeline, X_train, y_train, model_params, scoring, n_iter, verbose=True):
     """
-    This function performs a grid search with five time series splits on the training set.
+    This function performs a randomized grid search with five time series splits on the training set.
     ----------------------------------------------
     :param
            df (pandas.DataFrame): The given pandas data frame containing data which
                                   need to be split into train and test data sets.
-           scoring(String): The scoring metric used for grid search
+           scoring (String): The scoring metric used for grid search
            model: Used model for prediction.
            X_train (pandas.DataFrame): Training features
            y_train (pandas.DataFrame): Target
+           n_iter (int): The number of performed grid searches
            pipeline (sklearn.pipeline): The pipeline with the model and transformers which will be used for grid search.
     """
     print(f"Running grid search for the model based on {scoring}")
-    grid_pipeline = GridSearchCV(
+    grid_pipeline = RandomizedSearchCV(
         estimator=pipeline,
-        param_grid=model_params,
+        param_distributions=model_params,
         n_jobs=-1,
+        n_iter=n_iter,
         cv=TimeSeriesSplit(n_splits=5),
         scoring=scoring,
+        random_state=42,
         verbose=verbose,
     )
     grid_pipeline.fit(X_train, y_train)

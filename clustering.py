@@ -48,7 +48,7 @@ def get_silhouette_score(df,
     # Plot the resulting Silhouette scores on a graph
     with sns.axes_style("darkgrid"):
         fig = plt.figure(figsize=(16, 8))
-        ax = sns.lineplot(x=clusters, y=s_score, palette="dark", marker="o")
+        ax = sns.lineplot(x=clusters, y=s_score, palette="bright", marker="o")
         ax.set_title('Identify the Number of Clusters using Silhouette Score', fontsize=16, fontweight='bold', pad=20)
         ax.set(xlabel='Cluster', ylabel='BIC')
         fig.tight_layout()
@@ -79,7 +79,7 @@ def get_elbow(df, n_clusters, save_plot=False, save_name="elbow"):
         inertia.append(kmeansModel.inertia_)
     with sns.axes_style("darkgrid"):
         fig = plt.figure(figsize=(16, 8))
-        ax = sns.lineplot(x=K, y=inertia, palette="dark", marker="o")
+        ax = sns.lineplot(x=K, y=inertia, palette="bright", marker="o")
         ax.set_title('Elbow Method Showing the Optimal Number of Clusters', fontsize=16, fontweight='bold', pad=20)
         ax.set(xlabel='Cluster', ylabel='Inertia')
         fig.tight_layout()
@@ -116,7 +116,7 @@ def get_bic(df,
         bic_score.append(model.bic(df))
     with sns.axes_style("darkgrid"):
         fig = plt.figure(figsize=(16, 8))
-        ax = sns.lineplot(x=clusters, y=bic_score, palette="dark", marker="o")
+        ax = sns.lineplot(x=clusters, y=bic_score, palette="bright", marker="o")
         ax.set_title('Identify the Number of Clusters using BIC', fontsize=16, fontweight='bold', pad=20)
         ax.set_xticks(clusters)
         ax.set(xlabel='Cluster', ylabel='BIC')
@@ -139,7 +139,7 @@ def plot_clusters_sizes(X, title, save_plot=False, save_name="sizes"):
         None
     """
     fig = plt.figure(figsize=(12, 12))
-    ax = sns.countplot(x="cluster", data=X, palette="dark")
+    ax = sns.countplot(x="cluster", data=X, palette="bright")
     ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
     ax.set_xlabel("Cluster")
     ax.set_ylabel("Size")
@@ -163,11 +163,11 @@ def plot_clusters_boxplot(X, column_1, column_2, save_plot=False, save_name="box
         None
     """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
-    sns.boxplot(x="cluster", y=column_1, ax=ax1, data=X, palette="dark")
+    sns.boxplot(x="cluster", y=column_1, ax=ax1, data=X, palette="bright")
     ax1.set_title(f'Cluster - Feature {column_1}', fontsize=16, fontweight='bold', pad=20)
     ax1.set_xlabel('Cluster')
     ax1.set_ylabel(column_1)
-    sns.boxplot(x="cluster", y=column_2, ax=ax2, data=X, palette="dark")
+    sns.boxplot(x="cluster", y=column_2, ax=ax2, data=X, palette="bright")
     ax2.set_title(f'Cluster - Feature {column_2}', fontsize=16, fontweight='bold', pad=20)
     ax2.set_xlabel('Cluster')
     ax2.set_ylabel(column_2)
@@ -192,7 +192,7 @@ def plot_clusters_scatter(X, column_1, column_2, title, save_plot=False, save_na
         None
     """
     fig = plt.figure(figsize=(9, 9))
-    ax = sns.scatterplot(data=X, x=column_1, y=column_2, hue='cluster', s=20, alpha=0.1, palette="dark")
+    ax = sns.scatterplot(data=X, x=column_1, y=column_2, hue='cluster', s=20, alpha=0.1, palette="bright")
     ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title='Cluster')
     ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
     ax.set_xlabel(column_1)
@@ -219,7 +219,7 @@ def plot_clusters_pairplot(X, title, save_plot=False, save_name="pair"):
     ax = sns.pairplot(X,
                       hue="cluster",
                       corner=True,
-                      palette="dark",
+                      palette="bright",
                       height=3.5,
                       aspect=2,
                       )

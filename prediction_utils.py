@@ -37,6 +37,7 @@ def get_prediction_scores(y_true, y_predicted, s_mape=False, prediction_type='nn
     :param
         y_true (List): Test values
         y_true (List): Predicted values
+        prediction_type (String): The used prediction method needed for s_mape calculation
     """
     print("-------MODEL SCORES-------")
     print(f"MAPE: {100 * metrics.mean_absolute_percentage_error(y_true, y_predicted): .3f} %")
@@ -56,8 +57,8 @@ def create_prediction_error_line_plt_nn(df, temporal_res, save_fig=True):
     ----------------------------------------------
     :param
         df (pandas.DataFrame): The given data set
-        temporal_resolution (String): the target temporal resolution
-        save_fig (boolean): whether to save the image or not
+        temporal_resolution (String): The target temporal resolution
+        save_fig (boolean): Whether to save the image or not
     """
     PLOT_CONST = {
         "D": ["Day", "Daily"],
@@ -93,7 +94,13 @@ def create_prediction_error_line_plt_nn(df, temporal_res, save_fig=True):
 
 def preprocess_data_for_prediction(df, temporal_resolution):
     """
-    DOCSTRING!
+    This function preprocesses the data for the prediction part. Therefore we add continuous as well as categorical
+    features and extract the target column. The preprocessed dataframe, the name of the target column and a list of
+    continuous and categorical features will be returned.
+    ----------------------------------------------
+    :param
+        df (pandas.DataFrame): The given data set
+        temporal_resolution (String): The target temporal resolution
     """
     if temporal_resolution == 'D':
         df = add_datepart(df, 'Trip Start Timestamp', prefix='')

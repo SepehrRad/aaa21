@@ -285,7 +285,7 @@ def starttime_area_peak_hours(df, time_zone=None):
 
 
 def create_top_ten_map(
-        community_areas,
+    community_areas,
 ):
     """
     This function creates a folium GeoJson map with the boundaries of given Community Areas.
@@ -299,8 +299,9 @@ def create_top_ten_map(
     geo_json = utils.read_geo_dataset("community_areas.geojson")
     geo_json = geo_json.loc[geo_json["community"].isin(community_areas)]
     base_map = folium.Map(location=CHICAGO_COORD, tiles="cartodbpositron")
-    folium.GeoJson(data=geo_json,
-                   popup=folium.GeoJsonPopup(fields=['community']),
-                   style_function=lambda x: {'fillColor': 'orange', 'color': 'black', 'weight': 1}
-                   ).add_to(base_map)
+    folium.GeoJson(
+        data=geo_json,
+        popup=folium.GeoJsonPopup(fields=["community"]),
+        style_function=lambda x: {"fillColor": "orange", "color": "black", "weight": 1},
+    ).add_to(base_map)
     return base_map

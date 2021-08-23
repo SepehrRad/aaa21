@@ -1,8 +1,8 @@
 import json
 
-import numpy as np
 import geopandas
 import h3.api.numpy_int as h3
+import numpy as np
 from geojson.feature import *
 
 import hexagon
@@ -136,6 +136,7 @@ def _merge_geo_information(df, gdf):
     merged_gdf = geopandas.GeoDataFrame(merged_df, geometry="geometry_pickup")
     merged_gdf.drop(columns=["area_numbe_dropoff", "area_numbe_pickup"], inplace=True)
     return merged_gdf
+
 
 def add_community_areas_with_hexagons(df, return_geojson=False):
     """

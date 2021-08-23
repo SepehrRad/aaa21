@@ -78,7 +78,7 @@ def add_holidays(df):
     return df
 
 
-def add_spatial_features(df, with_hex=False, hex_res=None):
+def add_spatial_features(df, with_hex=False, hex_res=None, dropoff=False):
     """
     This function adds the relevant spatial features for prediction.
     ----------------------------------------------
@@ -140,6 +140,20 @@ def add_spatial_features(df, with_hex=False, hex_res=None):
             left_on="Pickup Community Area",
             right_on="area_numbe",
         )
+        if dropoff is True:
+            merged_df["Dropoff Community Area"] = (merged_df["Dropoff Community Area"].astype(float).astype(int))
+            gdf = gdf.rename(columns={"area_numbe": "area_numbe_dropoff", "City Center Distance": "City Center Distance Dropoff", "Airport Distance": "Airport Distance Dropoff"})
+            merged_df = merged_df.merge(
+                gdf,
+                how="left",
+                validate="m:1",
+                left_on="Dropoff Community Area",
+                right_on="area_numbe_dropoff",
+            )
+            merged_df.drop(columns=["area_numbe_dropoff"], inplace=True)
+            merged_df["Dropoff Community Area"] = merged_df["Dropoff Community Area"].astype(
+                str
+            )
         merged_df.drop(columns=["area_numbe"], inplace=True)
         merged_df["Pickup Community Area"] = merged_df["Pickup Community Area"].astype(
             str

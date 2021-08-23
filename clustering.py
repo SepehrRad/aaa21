@@ -149,7 +149,7 @@ def plot_clusters_sizes(X, title, save_plot=False, save_name="sizes"):
         fig.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
 
 
-def plot_clusters_boxplot(X, column_1, column_2, save_plot=False, save_name="box"):
+def plot_clusters_boxplot(X, column_1, save_plot=False, save_name="box"):
     """
     This function plots the distribution of two features in regards to the clusters as box plots.
     ----------------------------------------------
@@ -162,15 +162,12 @@ def plot_clusters_boxplot(X, column_1, column_2, save_plot=False, save_name="box
     :returns
         None
     """
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(20, 8))
-    sns.boxplot(x="cluster", y=column_1, ax=ax1, data=X, palette="bright")
-    ax1.set_title(f'Cluster - Feature {column_1}', fontsize=16, fontweight='bold', pad=20)
-    ax1.set_xlabel('Cluster')
-    ax1.set_ylabel(column_1)
-    sns.boxplot(x="cluster", y=column_2, ax=ax2, data=X, palette="bright")
-    ax2.set_title(f'Cluster - Feature {column_2}', fontsize=16, fontweight='bold', pad=20)
-    ax2.set_xlabel('Cluster')
-    ax2.set_ylabel(column_2)
+
+    fig = plt.figure(figsize=(9, 9))
+    ax = sns.boxplot(x="cluster", y=column_1, data=X, palette="bright")
+    ax.set_title(f'Cluster - Feature {column_1}', fontsize=16, fontweight='bold', pad=20)
+    ax.set_xlabel('Cluster')
+    ax.set_ylabel(column_1)
     fig.tight_layout()
 
     if save_plot:

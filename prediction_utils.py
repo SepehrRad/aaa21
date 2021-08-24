@@ -50,7 +50,7 @@ def get_prediction_scores(y_true, y_predicted, s_mape=False, prediction_type='nn
     print(f"Max Residual Error: {metrics.max_error(y_true, y_predicted): .3f}")
 
 
-def create_prediction_error_line_plt_nn(df, temporal_res, save_fig=True):
+def create_prediction_error_line_plt(df, temporal_res, save_fig=True):
     """
     This function plots the average prediction vs. actual demand in different temporal resolution.
     Furthermore, the function saves the result upon request as a png image.

@@ -50,7 +50,7 @@ def get_silhouette_score(df,
         fig = plt.figure(figsize=(16, 8))
         ax = sns.lineplot(x=clusters, y=s_score, palette="bright", marker="o")
         ax.set_title('Identify the Number of Clusters using Silhouette Score', fontsize=16, fontweight='bold', pad=20)
-        ax.set(xlabel='Cluster', ylabel='BIC')
+        ax.set(xlabel='Cluster', ylabel='Silhouette Score')
         fig.tight_layout()
 
     if save_plot:

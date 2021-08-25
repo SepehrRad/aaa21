@@ -2,6 +2,7 @@ import json
 
 import geopandas
 import h3.api.numpy_int as h3
+import numpy as np
 from geojson.feature import *
 
 import hexagon
@@ -89,6 +90,7 @@ def _prepare_for_merge(df, gdf):
     gdf["Community Area Center Lat"] = gdf["Community Area Center"].y
     gdf["Community Area Center Long"] = gdf["Community Area Center"].x
     gdf = _get_hexes(gdf)
+
     gdf = gdf[
         [
             "area_numbe",
@@ -158,3 +160,40 @@ def add_community_areas_with_hexagons(df, return_geojson=False):
         return merged_gdf, geojson_hex6, geojson_hex7
     else:
         return merged_gdf
+
+
+def add_community_names(df):
+    """
+    This function adds the names of Community Area names to a pd.DataFrame.
+    ----------------------------------------------
+    :param
+        df(pandas.DataFrame): Given data frame
+    :return
+        merged_df(pandas.DataFrame): DataFrame with Community Area names
+    """
+    gdf = geopandas.read_file("data/community_areas.geojson")
+    df.dropna(inplace=True)
+    df["Pickup Community Area"] = df["Pickup Community Area"].astype(float).astype(int)
+    df["Dropoff Community Area"] = (
+        df["Dropoff Community Area"].astype(float).astype(int)
+    )
+
+    gdf["area_numbe"] = gdf["area_numbe"].astype(float).astype(int)
+    gdf = gdf[["area_numbe", "community"]]
+    gdf.rename(columns={"community": "Community Area Name"}, inplace=True)
+    merged_df = df.merge(
+        gdf,
+        how="left",
+        validate="m:1",
+        left_on="Pickup Community Area",
+        right_on="area_numbe",
+    )
+    merged_df = merged_df.merge(
+        gdf,
+        how="left",
+        validate="m:1",
+        left_on="Dropoff Community Area",
+        right_on="area_numbe",
+        suffixes=("_pickup", "_dropoff"),
+    )
+    return merged_df

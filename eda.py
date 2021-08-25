@@ -282,3 +282,26 @@ def starttime_area_peak_hours(df, time_zone=None):
     )
     df_grp = df_grp.loc[df_grp.groupby("Pickup Community Area")["Total Trips"].idxmax()]
     return df_grp
+
+
+def create_top_ten_map(
+    community_areas,
+):
+    """
+    This function creates a folium GeoJson map with the boundaries of given Community Areas.
+    ----------------------------------------------
+    :param
+        community_areas(pd.Series): Community Areas to be plotted on map
+    :return:
+        folium.GeoJson: The created map
+    """
+
+    geo_json = utils.read_geo_dataset("community_areas.geojson")
+    geo_json = geo_json.loc[geo_json["community"].isin(community_areas)]
+    base_map = folium.Map(location=CHICAGO_COORD, tiles="cartodbpositron")
+    folium.GeoJson(
+        data=geo_json,
+        popup=folium.GeoJsonPopup(fields=["community"]),
+        style_function=lambda x: {"fillColor": "orange", "color": "black", "weight": 1},
+    ).add_to(base_map)
+    return base_map

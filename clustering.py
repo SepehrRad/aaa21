@@ -1,24 +1,26 @@
+import math
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
-import math
-
 from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
-from sklearn.mixture import GaussianMixture
 from sklearn.metrics import silhouette_score
+from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import StandardScaler
 
 
-def get_silhouette_score(df,
-                         n_clusters,
-                         n_init=20,
-                         init_params='kmeans',
-                         metric="euclidean",
-                         sample_size=1000,
-                         random_state=7,
-                         save_plot=False,
-                         save_name="silhouette"):
+def get_silhouette_score(
+    df,
+    n_clusters,
+    n_init=20,
+    init_params="kmeans",
+    metric="euclidean",
+    sample_size=1000,
+    random_state=7,
+    save_plot=False,
+    save_name="silhouette",
+):
     """
     This function calculates the silhouette score for n clusters with GMMand plots the result as line chart.
     ----------------------------------------------
@@ -41,20 +43,35 @@ def get_silhouette_score(df,
     clusters = range(2, n_clusters + 2)
 
     for cluster in clusters:
-        model = GaussianMixture(n_components=cluster, n_init=n_init, init_params=init_params)
+        model = GaussianMixture(
+            n_components=cluster, n_init=n_init, init_params=init_params
+        )
         labels = model.fit_predict(df)
-        s_score.append(silhouette_score(df, labels, metric=metric, sample_size=sample_size, random_state=random_state))
+        s_score.append(
+            silhouette_score(
+                df,
+                labels,
+                metric=metric,
+                sample_size=sample_size,
+                random_state=random_state,
+            )
+        )
 
     # Plot the resulting Silhouette scores on a graph
     with sns.axes_style("darkgrid"):
         fig = plt.figure(figsize=(16, 8))
         ax = sns.lineplot(x=clusters, y=s_score, palette="bright", marker="o")
-        ax.set_title('Identify the Number of Clusters using Silhouette Score', fontsize=16, fontweight='bold', pad=20)
-        ax.set(xlabel='Cluster', ylabel='Silhouette Score')
+        ax.set_title(
+            "Identify the Number of Clusters using Silhouette Score",
+            fontsize=16,
+            fontweight="bold",
+            pad=20,
+        )
+        ax.set(xlabel="Cluster", ylabel="Silhouette Score")
         fig.tight_layout()
 
     if save_plot:
-        fig.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.savefig(f"img/{save_name}.png", bbox_inches="tight", dpi=1000)
 
 
 def get_elbow(df, n_clusters, save_plot=False, save_name="elbow"):
@@ -74,26 +91,28 @@ def get_elbow(df, n_clusters, save_plot=False, save_name="elbow"):
     K = range(1, n_clusters + 2)
 
     for k in K:
-        kmeansModel = KMeans(n_clusters=k, init='k-means++', random_state=7)
+        kmeansModel = KMeans(n_clusters=k, init="k-means++", random_state=7)
         kmeansModel.fit(df)
         inertia.append(kmeansModel.inertia_)
     with sns.axes_style("darkgrid"):
         fig = plt.figure(figsize=(16, 8))
         ax = sns.lineplot(x=K, y=inertia, palette="bright", marker="o")
-        ax.set_title('Elbow Method Showing the Optimal Number of Clusters', fontsize=16, fontweight='bold', pad=20)
-        ax.set(xlabel='Cluster', ylabel='Inertia')
+        ax.set_title(
+            "Elbow Method Showing the Optimal Number of Clusters",
+            fontsize=16,
+            fontweight="bold",
+            pad=20,
+        )
+        ax.set(xlabel="Cluster", ylabel="Inertia")
         fig.tight_layout()
 
     if save_plot:
-        fig.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.savefig(f"img/{save_name}.png", bbox_inches="tight", dpi=1000)
 
 
-def get_bic(df,
-            n_clusters,
-            n_init=20,
-            init_params='kmeans',
-            save_plot=False,
-            save_name="bic"):
+def get_bic(
+    df, n_clusters, n_init=20, init_params="kmeans", save_plot=False, save_name="bic"
+):
     """
     This function calculates the BIC for n clusters with GMM and plots the result as line chart.
     ----------------------------------------------
@@ -112,18 +131,25 @@ def get_bic(df,
     clusters = range(2, n_clusters + 2)
 
     for cluster in clusters:
-        model = GaussianMixture(n_components=cluster, n_init=n_init, init_params=init_params).fit(df)
+        model = GaussianMixture(
+            n_components=cluster, n_init=n_init, init_params=init_params
+        ).fit(df)
         bic_score.append(model.bic(df))
     with sns.axes_style("darkgrid"):
         fig = plt.figure(figsize=(16, 8))
         ax = sns.lineplot(x=clusters, y=bic_score, palette="bright", marker="o")
-        ax.set_title('Identify the Number of Clusters using BIC', fontsize=16, fontweight='bold', pad=20)
+        ax.set_title(
+            "Identify the Number of Clusters using BIC",
+            fontsize=16,
+            fontweight="bold",
+            pad=20,
+        )
         ax.set_xticks(clusters)
-        ax.set(xlabel='Cluster', ylabel='BIC')
+        ax.set(xlabel="Cluster", ylabel="BIC")
         fig.tight_layout()
 
     if save_plot:
-        fig.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.savefig(f"img/{save_name}.png", bbox_inches="tight", dpi=1000)
 
 
 def plot_clusters_sizes(X, title, save_plot=False, save_name="sizes"):
@@ -140,13 +166,13 @@ def plot_clusters_sizes(X, title, save_plot=False, save_name="sizes"):
     """
     fig = plt.figure(figsize=(12, 12))
     ax = sns.countplot(x="cluster", data=X, palette="bright")
-    ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
+    ax.set_title(title, fontsize=16, fontweight="bold", pad=20)
     ax.set_xlabel("Cluster")
     ax.set_ylabel("Size")
     fig.tight_layout()
 
     if save_plot:
-        fig.figure.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.figure.savefig(f"img/{save_name}.png", bbox_inches="tight", dpi=1000)
 
 
 def plot_clusters_boxplot(X, column_1, save_plot=False, save_name="box"):
@@ -165,16 +191,20 @@ def plot_clusters_boxplot(X, column_1, save_plot=False, save_name="box"):
 
     fig = plt.figure(figsize=(9, 9))
     ax = sns.boxplot(x="cluster", y=column_1, data=X, palette="bright")
-    ax.set_title(f'Cluster - Feature {column_1}', fontsize=16, fontweight='bold', pad=20)
-    ax.set_xlabel('Cluster')
+    ax.set_title(
+        f"Cluster - Feature {column_1}", fontsize=16, fontweight="bold", pad=20
+    )
+    ax.set_xlabel("Cluster")
     ax.set_ylabel(column_1)
     fig.tight_layout()
 
     if save_plot:
-        fig.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.savefig(f"img/{save_name}.png", bbox_inches="tight", dpi=1000)
 
 
-def plot_clusters_scatter(X, column_1, column_2, title, save_plot=False, save_name="scatter"):
+def plot_clusters_scatter(
+    X, column_1, column_2, title, save_plot=False, save_name="scatter"
+):
     """
     This function plots two features in regards to the clusters as scatterplot.
     ----------------------------------------------
@@ -189,15 +219,17 @@ def plot_clusters_scatter(X, column_1, column_2, title, save_plot=False, save_na
         None
     """
     fig = plt.figure(figsize=(9, 9))
-    ax = sns.scatterplot(data=X, x=column_1, y=column_2, hue='cluster', s=20, alpha=0.1, palette="bright")
-    ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., title='Cluster')
-    ax.set_title(title, fontsize=16, fontweight='bold', pad=20)
+    ax = sns.scatterplot(
+        data=X, x=column_1, y=column_2, hue="cluster", s=20, alpha=0.1, palette="bright"
+    )
+    ax.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0, title="Cluster")
+    ax.set_title(title, fontsize=16, fontweight="bold", pad=20)
     ax.set_xlabel(column_1)
     ax.set_ylabel(column_2)
     fig.tight_layout()
 
     if save_plot:
-        fig.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.savefig(f"img/{save_name}.png", bbox_inches="tight", dpi=1000)
 
 
 def plot_clusters_pairplot(X, title, save_plot=False, save_name="pair"):
@@ -213,17 +245,18 @@ def plot_clusters_pairplot(X, title, save_plot=False, save_name="pair"):
         None
     """
     fig = plt.figure(figsize=(20, 20))
-    ax = sns.pairplot(X,
-                      hue="cluster",
-                      corner=True,
-                      palette="bright",
-                      height=3.5,
-                      aspect=2,
-                      )
+    ax = sns.pairplot(
+        X,
+        hue="cluster",
+        corner=True,
+        palette="bright",
+        height=3.5,
+        aspect=2,
+    )
     ax.fig.suptitle(title, y=1.08)
     fig.tight_layout()
     if save_plot:
-        fig.savefig(f'img/{save_name}.png', bbox_inches='tight', dpi=1000)
+        fig.savefig(f"img/{save_name}.png", bbox_inches="tight", dpi=1000)
 
 
 def _cyclical_feature_transformer(cyclical_col):
@@ -322,7 +355,7 @@ def transform_columns(df, col_dict, drop_cols=True, drop_first=False):
     return df
 
 
-def get_clusters_gmm(X, n_cluster, n_init=20, init_params='kmeans', random_state=7):
+def get_clusters_gmm(X, n_cluster, n_init=20, init_params="kmeans", random_state=7):
     """
     This function creates a Gaussian Mixture Model and returns a DataFrame with a prediction for the cluster of each
     data sample.
@@ -338,13 +371,17 @@ def get_clusters_gmm(X, n_cluster, n_init=20, init_params='kmeans', random_state
         pandas.DataFrame: DataFrame with information with a prediction for the cluster of each data sample.
     """
 
-    gmm = GaussianMixture(n_components=n_cluster, random_state=random_state, n_init=n_init,
-                          init_params=init_params).fit(X)
+    gmm = GaussianMixture(
+        n_components=n_cluster,
+        random_state=random_state,
+        n_init=n_init,
+        init_params=init_params,
+    ).fit(X)
     cluster = gmm.predict(X)
     cluster_proba = gmm.predict_proba(X)
-    X['cluster'] = cluster
+    X["cluster"] = cluster
     for k in range(n_cluster):
-        X[f'cluster_{k}_prob'] = cluster_proba[:, k]
+        X[f"cluster_{k}_prob"] = cluster_proba[:, k]
     return X
 
 
@@ -360,7 +397,9 @@ def get_clusters_kmeans(X, n_cluster, random_state=7):
     :returns
         pandas.DataFrame: DataFrame with information with a prediction for the cluster of each data sample.
     """
-    kmm = KMeans(n_clusters=n_cluster, init='k-means++', random_state=random_state).fit(X)
+    kmm = KMeans(n_clusters=n_cluster, init="k-means++", random_state=random_state).fit(
+        X
+    )
     cluster = kmm.predict(X)
-    X['cluster'] = cluster
+    X["cluster"] = cluster
     return X

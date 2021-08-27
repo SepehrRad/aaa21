@@ -62,7 +62,7 @@ def find_best_parameters_for_model(
     grid_pipeline = RandomizedSearchCV(
         estimator=pipeline,
         param_distributions=model_params,
-        n_jobs=-1,
+        n_jobs=1,
         n_iter=n_iter,
         cv=TimeSeriesSplit(n_splits=5),
         scoring=scoring,

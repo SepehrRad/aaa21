@@ -2,7 +2,7 @@
 
 Advanced Analyitcs and Application 2021 team assignement by team "Anacondas"
 
-This project provides analysis of taxi demand patterns in the City of Chicago in 2015 to provide valuable information for the market entry of an all electric ridehailing service of an gherman car manufacturer. 
+This project provides analysis of taxi demand patterns in the City of Chicago in 2015 to provide valuable information for the market entry of an all electric ridehailing service of an german car manufacturer. 
 
 ## Group
 

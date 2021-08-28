@@ -182,7 +182,6 @@ def plot_clusters_boxplot(X, column_1, save_plot=False, save_name="box"):
     :param
         X (pandas.DataFrame): The given pandas data frame including a column "cluster".
         column_1: First feature of DataFrame X to be used for the plot.
-        column_2: Second feature of DataFrame X to be used for the plot.
         save_plot (bool): Saves the plot as png in wd/img.
         save_name (string): Name of file.
     :returns
@@ -295,14 +294,13 @@ def _categorical_feature_transformer(df, categorical_col_names, drop_first=False
 
 def _numerical_feature_transformer(df, numerical_col_names):
     """
-
+    THis function standardizes numerical features in a given data frame using the sklearn.StandardScaler.
     ----------------------------------------------
     :param
         df (pandas.DataFrame): the given pandas data frame with numerical features
-        categorical_col_names (string[]): the name of the categorical features as a list
-        drop_first (bool): the decision to drop one category per feature
+        numerical_col_names (string[]): the name of the numerical features as a list
     :returns
-        pandas.DataFrame: dummy-coded DataFrame
+        pandas.DataFrame:  DataFrame with standardized numerical features
     """
     scaler = StandardScaler()
     df[numerical_col_names] = scaler.fit_transform(df[numerical_col_names])

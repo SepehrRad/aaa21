@@ -83,7 +83,10 @@ def add_spatial_features(df, with_hex=False, hex_res=None, dropoff=False):
     This function adds the relevant spatial features for prediction.
     ----------------------------------------------
     :param
-        df(pandas.DataFrame): Given data frame
+        df (pandas.DataFrame): Given data frame
+        with_hex (bool): Add h3 indices and centroid coordinates for res 6 and 7.
+        hex_res (int): Calculates distance from pcikup to  city center for given resolution.
+        dropoff (bool): Add distance from dropoff to city center to gdf.
     :return
         geoPandas.GeoDataFrame: The merged geo data frame
     """

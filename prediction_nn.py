@@ -1,6 +1,7 @@
 import re
 
 from fastai.tabular.all import *
+
 from prediction_utils import preprocess_data_for_prediction
 
 
@@ -21,7 +22,9 @@ def split_data_sets_for_nn(
         DataLoader: the test data loader
         pandas.DataFrame: the test data frame
     """
-    data, target, cont_vars, cat_vars = preprocess_data_for_prediction(df=df, temporal_resolution=temporal_resolution)
+    data, target, cont_vars, cat_vars = preprocess_data_for_prediction(
+        df=df, temporal_resolution=temporal_resolution
+    )
     train_index = int(len(data) * (1 - test_size))
     df_train = data[0:train_index]
     df_test = data[train_index:]

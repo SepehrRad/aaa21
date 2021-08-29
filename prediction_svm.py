@@ -1,7 +1,7 @@
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.compose import ColumnTransformer
-from sklearn.model_selection import TimeSeriesSplit, RandomizedSearchCV
+from sklearn.model_selection import RandomizedSearchCV, TimeSeriesSplit
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 
 def split_data_sets_for_svm(df, test_size=0.2):
@@ -28,24 +28,26 @@ def make_pipeline_for_svm(cat_vars, cont_vars, model):
            cont_vars (list): List of continuous variables.
            model: Used model for prediction.
     """
-    numeric_transformer = Pipeline(steps=[('standard_scaler', StandardScaler())])
-    categorical_transformer = Pipeline(steps=[('one_hot_encoder', OneHotEncoder(handle_unknown='ignore'))])
+    numeric_transformer = Pipeline(steps=[("standard_scaler", StandardScaler())])
+    categorical_transformer = Pipeline(
+        steps=[("one_hot_encoder", OneHotEncoder(handle_unknown="ignore"))]
+    )
     svr_preprocessor = ColumnTransformer(
         transformers=[
-            ('numerical scaler', numeric_transformer, cont_vars),
-            ('one hot encoder', categorical_transformer, cat_vars)
+            ("numerical scaler", numeric_transformer, cont_vars),
+            ("one hot encoder", categorical_transformer, cat_vars),
         ]
     )
     svr_model = model
-    svr_pipeline = Pipeline(steps=[
-        ('preprocessor', svr_preprocessor),
-        ('svr model', svr_model)
-    ])
+    svr_pipeline = Pipeline(
+        steps=[("preprocessor", svr_preprocessor), ("svr model", svr_model)]
+    )
     return svr_pipeline
 
 
 def find_best_parameters_for_model(
-        pipeline, X_train, y_train, model_params, scoring, n_iter, verbose=True):
+    pipeline, X_train, y_train, model_params, scoring, n_iter, verbose=True
+):
     """
     This function performs a randomized grid search with five time series splits on the training set.
     ----------------------------------------------

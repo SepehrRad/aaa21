@@ -11,6 +11,10 @@ seaborn
 h3
 folium
 fastai
+sklearn
+matplotlib
+skopt
+shapely
 
 ###### Requirements with Version Specifiers ######`
 geopandas >=0.9.0

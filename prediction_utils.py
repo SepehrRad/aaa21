@@ -1,10 +1,10 @@
-from fastai.tabular.all import *
 import math
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from fastai.tabular.all import *
 from sklearn import metrics
 
 
@@ -19,18 +19,32 @@ def _smape(y_true, y_predicted, prediction_type):
     :return
         float : sMAPE Score
     """
-    if prediction_type == 'nn':
+    if prediction_type == "nn":
         y_true = np.array([i for i in y_true])
         y_predicted = np.array([i for i in y_predicted])
-        sMape = (100 / len(y_true) * np.sum(2 * np.abs(y_predicted - y_true) /
-                                            (np.abs(y_true) + np.abs(y_predicted))))[0]
+        sMape = (
+            100
+            / len(y_true)
+            * np.sum(
+                2
+                * np.abs(y_predicted - y_true)
+                / (np.abs(y_true) + np.abs(y_predicted))
+            )
+        )[0]
     else:
-        sMape = (100 / len(y_true) * np.sum(2 * np.abs(y_predicted - y_true) /
-                                            (np.abs(y_true) + np.abs(y_predicted))))
+        sMape = (
+            100
+            / len(y_true)
+            * np.sum(
+                2
+                * np.abs(y_predicted - y_true)
+                / (np.abs(y_true) + np.abs(y_predicted))
+            )
+        )
     return float(sMape)
 
 
-def get_prediction_scores(y_true, y_predicted, s_mape=False, prediction_type='nn'):
+def get_prediction_scores(y_true, y_predicted, s_mape=False, prediction_type="nn"):
     """
     This function prints the prediction scores.
     ----------------------------------------------
@@ -40,7 +54,9 @@ def get_prediction_scores(y_true, y_predicted, s_mape=False, prediction_type='nn
         prediction_type (String): The used prediction method needed for s_mape calculation
     """
     print("-------MODEL SCORES-------")
-    print(f"MAPE: {100 * metrics.mean_absolute_percentage_error(y_true, y_predicted): .3f} %")
+    print(
+        f"MAPE: {100 * metrics.mean_absolute_percentage_error(y_true, y_predicted): .3f} %"
+    )
     if s_mape:
         print(f"sMAPE: {_smape(y_true, y_predicted, prediction_type): .3f} %")
     print(f"MAE: {metrics.mean_absolute_error(y_true, y_predicted): .3f}")
@@ -102,22 +118,22 @@ def preprocess_data_for_prediction(df, temporal_resolution):
         df (pandas.DataFrame): The given data set
         temporal_resolution (String): The target temporal resolution
     """
-    if temporal_resolution == 'D':
-        df = add_datepart(df, 'Trip Start Timestamp', prefix='')
+    if temporal_resolution == "D":
+        df = add_datepart(df, "Trip Start Timestamp", prefix="")
     else:
-        df = add_datepart(df, 'Trip Start Timestamp', prefix='', time=True)
-        _ = [c for c in df.columns if ('minute' in c.lower() or 'second' in c.lower())]
+        df = add_datepart(df, "Trip Start Timestamp", prefix="", time=True)
+        _ = [c for c in df.columns if ("minute" in c.lower() or "second" in c.lower())]
         df.drop(_, axis=1, inplace=True)
-    df = df.astype({'Week': 'uint32'})
-    df = df.astype({'Elapsed': 'int64'})
+    df = df.astype({"Week": "uint32"})
+    df = df.astype({"Elapsed": "int64"})
     # Only Columns with more than 35 distinct values will be considered as continuous
     target = f"Demand ({temporal_resolution})"
     cont_vars, cat_vars = cont_cat_split(df, max_card=35, dep_var=target)
     # Spacial temporal columns that should be considered as categories in an embedding structure
-    cont_vars.remove('Dayofyear')
-    cat_vars.append('Dayofyear')
-    cont_vars.remove('Week')
-    cat_vars.append('Week')
+    cont_vars.remove("Dayofyear")
+    cat_vars.append("Dayofyear")
+    cont_vars.remove("Week")
+    cat_vars.append("Week")
     hex_regex = re.compile(".*hex")
     _ = list(filter(hex_regex.match, cont_vars))
     if bool(_):

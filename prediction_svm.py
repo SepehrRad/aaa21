@@ -73,5 +73,5 @@ def find_best_parameters_for_model(
     )
     grid_pipeline.fit(X_train, y_train)
     print(f"Best {scoring} Score was: {grid_pipeline.best_score_}")
-    print(f"The best hyper parameters for the model are:")
+    print("The best hyper parameters for the model are:")
     print(grid_pipeline.best_params_)
